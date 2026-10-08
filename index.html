@@ -7,7 +7,9 @@
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0e1e24">
 <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png">
-<link rel="apple-touch-icon" href="icons/icon-512.png">
+<!-- Apple Touch Icons for iOS -->
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<link rel="apple-touch-icon" sizes="180x180" href="icons/icon-180.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CardWise">
@@ -187,7 +189,7 @@ function openForm(c){
   $('#fp').onchange=async ev=>{if(ev.target.files[0])photo=await shrink(ev.target.files[0])};
   $('#cn').onclick=closeSheet;
   $('#sv').onclick=()=>{
-    const name=$('#fn').value.trim(),lim=$('#fl').value;if(!name||lim===''){$('#fn').focus();return}
+    const name=$('#fn').value.trim(),lim=$('#fl').value;if(!name\vert{}\vert{}lim===''){$('#fn').focus();return}
     const clamp=v=>v?Math.max(1,Math.min(31,+v)):'';
     const o={id:e.id||'c'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,limit:+lim,stmtDay:clamp($('#fs').value),dueDay:clamp($('#fd').value),opened:$('#fo').value,last4:$('#f4').value.replace(/\D/g,'').slice(0,4),color:col,photo};
     c?cards[cards.findIndex(x=>x.id===c.id)]=o:cards.push(o);
