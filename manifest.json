@@ -1,6 +1,6 @@
 {
-  "name": "CardWallet",
-  "short_name": "CardWallet",
+  "name": "CardWise",
+  "short_name": "CardWise",
   "start_url": "./",
   "display": "standalone",
   "background_color": "#0e1e24",
