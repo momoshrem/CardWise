@@ -476,6 +476,17 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 #pin>div{border-radius:24px 24px 0 0;padding-top:10px}
 #pin>div::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:#33454d;margin:0 auto 14px}
 #sheet>div,#pin>div{overscroll-behavior:contain}
+
+/* PIN page, data page, restore options */
+.pinw{text-align:center;padding-top:8px}.pinw h2{margin:10px 0 6px;font-size:20px;font-weight:700;color:#fff}
+.pmsg{font-size:14px;color:var(--sub);margin:0 0 22px;min-height:20px;line-height:1.4}.pmsg.bad{color:var(--org)}
+.pinw .pad{margin-top:4px}.pinw .btn{margin-top:6px}
+.okc{width:64px;height:64px;border-radius:50%;margin:24px auto 14px;display:flex;align-items:center;justify-content:center;background:rgba(0,200,5,.15);color:var(--g)}
+.opt{display:flex;gap:12px;align-items:flex-start;width:100%;text-align:left;margin:0 0 8px;padding:14px;border-radius:16px;border:1.5px solid var(--line);background:var(--p1);color:#fff;cursor:pointer;font:inherit}
+.opt i{flex:none;width:20px;height:20px;margin-top:1px;border-radius:50%;border:1.5px solid var(--mut)}
+.opt.on{border-color:var(--g)}.opt.on i{border-color:var(--g);background:radial-gradient(circle,var(--g) 0 45%,transparent 50%)}
+.opt b{display:block;font-size:15px;font-weight:600}.opt small{display:block;margin-top:3px;font-size:13px;color:var(--sub);line-height:1.35}
+#settings .stat{margin:10px 2px 14px}
 </style>
 </head>
 <body>
@@ -676,6 +687,7 @@ const EMPTY = () => ({
   maaser: { amount: 0, history: [], updatedAt: 0 },
   home: { order: HOME_KEYS.slice(), updatedAt: 0 },
   profile: { name: '', updatedAt: 0 },
+  security: { pin: '', updatedAt: 0 },
   cards: [],
   payments: [],
   deleted: { expenses: {}, cards: {}, payments: {} },
@@ -699,6 +711,7 @@ function loadState() {
       if (!Array.isArray(S.maaser.history)) S.maaser.history = [];
       S.home = { order: homeOrder(j.home && j.home.order), updatedAt: (j.home && +j.home.updatedAt) || 0 };
       S.profile = { name: String((j.profile && j.profile.name) || '').slice(0, 30), updatedAt: (j.profile && +j.profile.updatedAt) || 0 };
+      S.security = { pin: String((j.security && j.security.pin) || '').slice(0, 40), updatedAt: (j.security && +j.security.updatedAt) || 0 };
     }
   } catch (e) { S = EMPTY(); }
   sortCards();
@@ -769,14 +782,14 @@ const Sync = {
   },
 
   serialize(kind) {
-    if (kind === 'expenses') return { version: 1, expenses: S.expenses, maaser: S.maaser, home: S.home, profile: S.profile, deleted: S.deleted.expenses };
+    if (kind === 'expenses') return { version: 1, expenses: S.expenses, maaser: S.maaser, home: S.home, profile: S.profile, security: S.security, deleted: S.deleted.expenses };
     if (kind === 'cards') return { version: 1, cards: S.cards, deleted: S.deleted.cards };
     return { version: 2, payments: S.payments, deleted: S.deleted.payments };
   },
 
   /* merge what is in the gist into local data; returns true if anything visible changed */
   mergeIn(remote) {
-    const before = canon({ e: S.expenses, m: S.maaser, h: S.home, n: S.profile, c: S.cards, p: S.payments });
+    const before = canon({ e: S.expenses, m: S.maaser, h: S.home, n: S.profile, s: S.security, c: S.cards, p: S.payments });
     const rx = remote.expenses || {}, rc = remote.cards || {}, rp = remote.payments || {};
     const e = mergeList(S.expenses, rx.expenses, S.deleted.expenses, rx.deleted);
     S.expenses = e.items; S.deleted.expenses = e.tombs;
@@ -789,11 +802,14 @@ const Sync = {
     if (rx.profile && typeof rx.profile === 'object' && (+rx.profile.updatedAt || 0) > (S.profile.updatedAt || 0)) {
       S.profile = { name: String(rx.profile.name || '').slice(0, 30), updatedAt: +rx.profile.updatedAt };
     }
+    if (rx.security && typeof rx.security === 'object' && typeof rx.security.pin === 'string' && (+rx.security.updatedAt || 0) > (S.security.updatedAt || 0)) {
+      S.security = { pin: rx.security.pin.slice(0, 40), updatedAt: +rx.security.updatedAt };
+    }
     const c = mergeList(S.cards, rc.cards, S.deleted.cards, rc.deleted);
     S.cards = c.items; S.deleted.cards = c.tombs; sortCards();
     const p = mergeList(S.payments, rp.payments, S.deleted.payments, rp.deleted);
     S.payments = p.items; S.deleted.payments = p.tombs;
-    return before !== canon({ e: S.expenses, m: S.maaser, h: S.home, n: S.profile, c: S.cards, p: S.payments });
+    return before !== canon({ e: S.expenses, m: S.maaser, h: S.home, n: S.profile, s: S.security, c: S.cards, p: S.payments });
   },
 
   async parseFiles(j) {
@@ -1401,7 +1417,7 @@ function bindExpenses() {
 /* =====================================================================
    Cards tab (ported from CardWise behavior)
    ===================================================================== */
-const SOON = 3, PASS = '1203';
+const SOON = 3;
 const lbl = c => c.name || (c.last4 ? 'Card ending ' + c.last4 : 'Unnamed card');
 
 function shrink(file) {
@@ -1512,7 +1528,7 @@ function askPin(ok) {
       if (k === '<') { v = v.slice(0, -1); draw(); return; }
       if (v.length < 4) v += k;
       if (v.length < 4) return draw();
-      if (v === PASS) { $('#pin').classList.remove('on'); ok(); } else { v = ''; draw('Wrong passcode. Try again.'); }
+      if (pinOk(v)) { $('#pin').classList.remove('on'); ok(); } else { v = ''; draw('Wrong passcode. Try again.'); }
     });
   };
   draw(); $('#pin').classList.add('on');
@@ -1668,6 +1684,232 @@ function openColorPicker(id) {
     $('#cps').onclick = () => { c.chartColor = hsvToHex(st.h, st.s, st.v); c.updatedAt = nowTs(); closeSheet(); commit('cards'); };
     $('#cpr').onclick = () => { c.chartColor = ''; c.updatedAt = nowTs(); closeSheet(); commit('cards'); };
   });
+}
+
+/* =====================================================================
+   Security (change PIN), export (JSON, CSV) and restore from backup.
+   Pages live inside the Settings overlay (see 07-settings.js).
+   ===================================================================== */
+
+/* ---------- PIN ---------- */
+/* The PIN syncs, so only a salted hash is stored, never the digits themselves. */
+function hashPin(p) {
+  const s = 'cardwise|' + p + '|pin';
+  let h1 = 0xdeadbeef, h2 = 0x41c6ce57;
+  for (let i = 0; i < s.length; i++) { const c = s.charCodeAt(i); h1 = Math.imul(h1 ^ c, 2654435761); h2 = Math.imul(h2 ^ c, 1597334677); }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
+}
+/* until a PIN is chosen, the original one still works */
+const pinOk = v => (S.security && S.security.pin) ? hashPin(v) === S.security.pin : v === '1203';
+
+function renderPinPage(host) {
+  host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Settings</button></div><h1 class="vt vt2">Change PIN</h1><div class="pinw" id="pinw"></div>`;
+  const w = $('#pinw');
+  const STEPS = { cur: ['Enter current PIN', 'To make sure it is you'], nw: ['Enter new PIN', 'Choose 4 digits'], cf: ['Confirm new PIN', 'Enter it once more'] };
+  let step = 'cur', v = '', first = '';
+  const draw = (msg, bad) => {
+    const t = STEPS[step];
+    w.innerHTML = `<h2>${t[0]}</h2><p class="pmsg${bad ? ' bad' : ''}">${esc(msg || t[1])}</p><div class="dots">${[0, 1, 2, 3].map(i => `<span class="${i < v.length ? 'f' : ''}"></span>`).join('')}</div><div class="pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '<'].map(k => k === '' ? '<span></span>' : k === '<' ? '<button class="gh" data-k="<">Delete</button>' : `<button data-k="${k}">${k}</button>`).join('')}</div>`;
+  };
+  const done = () => {
+    S.security = { pin: hashPin(first), updatedAt: nowTs() };
+    commit('expenses');
+    w.innerHTML = `<div class="okc">${svg(IC.check, 30)}</div><h2>PIN changed</h2><p class="pmsg">${Sync.connected() ? 'It will update on your other devices too.' : 'It applies on this device. Connect sync to use it on your other devices.'}</p><button class="btn" id="pdone" type="button">Done</button>`;
+    $('#pdone').onclick = () => renderSettings('main');
+  };
+  w.onclick = e => {
+    const b = e.target.closest('button[data-k]'); if (!b) return;
+    const k = b.dataset.k;
+    if (k === '<') { v = v.slice(0, -1); draw(); return; }
+    if (v.length >= 4) return;
+    v += k;
+    if (v.length < 4) { draw(); return; }
+    const got = v; v = '';
+    if (step === 'cur') {
+      if (pinOk(got)) { step = 'nw'; draw(); } else draw('Wrong PIN. Try again.', true);
+    } else if (step === 'nw') {
+      first = got; step = 'cf'; draw();
+    } else if (got === first) done();
+    else { step = 'nw'; first = ''; draw('The PINs did not match. Start again.', true); }
+  };
+  draw();
+}
+
+/* ---------- saving a file ---------- */
+/* Share sheet where the phone offers one (Save to Files), else a normal download. */
+async function saveFile(name, text, mime) {
+  try {
+    const f = new File([text], name, { type: mime });
+    if (navigator.canShare && navigator.canShare({ files: [f] })) { await navigator.share({ files: [f] }); return 'shared'; }
+  } catch (e) { if (e && e.name === 'AbortError') return 'cancelled'; }
+  const a = document.createElement('a'), url = URL.createObjectURL(new Blob([text], { type: mime }));
+  a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 5000);
+  return 'downloaded';
+}
+
+/* ---------- export ---------- */
+const BACKUP_DATA = () => JSON.parse(JSON.stringify({ expenses: S.expenses, maaser: S.maaser, home: S.home, profile: S.profile, cards: S.cards, payments: S.payments }));
+const backupJson = () => JSON.stringify({ app: 'CardWise', format: 1, exportedAt: new Date().toISOString(), data: BACKUP_DATA() }, null, 1);
+
+function csvCell(v) {
+  let s = v == null ? '' : String(v);
+  if (/^[=+@\t\r-]/.test(s) && isNaN(Number(s))) s = "'" + s;
+  return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+}
+const csvRows = rows => rows.map(r => r.map(csvCell).join(',')).join('\r\n');
+function backupCsv() {
+  const cardName = id => { const c = S.cards.find(x => x.id === id); return c ? lbl(c) : 'Deleted card'; };
+  const out = [];
+  out.push(['Payments'], ['Date', 'Card', 'Amount', 'Type']);
+  S.payments.slice().sort((a, b) => a.date < b.date ? 1 : a.date > b.date ? -1 : 0).forEach(p => out.push([p.date, cardName(p.card), p.amt.toFixed(2), p.z ? 'Zelle received' : 'Payment']));
+  out.push([], ['Expenses'], ['Description', 'Monthly amount', 'Note', 'Status']);
+  S.expenses.forEach(e => {
+    if (e.id === SUBS_ID) { (e.subItems || []).forEach(s => out.push(['Subscriptions: ' + s.name, (+s.amount || 0).toFixed(2), '', 'Active'])); return; }
+    out.push([e.desc, (+e.amount || 0).toFixed(2), e.note || '', e.isArchived ? 'Paused' : 'Active']);
+  });
+  out.push([], ['Cards'], ['Name', 'Type', 'Credit limit', 'Statement day', 'Due day', 'Opened', 'Last 4']);
+  S.cards.forEach(c => out.push([lbl(c), c.type === 'debit' ? 'Debit' : 'Credit', c.type === 'debit' ? '' : (+c.limit || 0).toFixed(2), c.stmtDay || '', c.dueDay || '', c.opened || '', c.last4 || '']));
+  out.push([], ['Maaser'], ['Date', 'Change', 'Balance']);
+  (S.maaser.history || []).slice().sort((a, b) => b.timestamp - a.timestamp).forEach(h => out.push([tstr(new Date(h.timestamp)), (h.delta || 0).toFixed(2), (h.amount || 0).toFixed(2)]));
+  out.push(['Current balance', '', (+S.maaser.amount || 0).toFixed(2)]);
+  return '﻿' + csvRows(out) + '\r\n';
+}
+
+/* ---------- restore ---------- */
+const UNDO_KEY = 'et_undo';
+let undoMem = null, pendingRestore = null;
+const undoGet = () => { if (undoMem) return undoMem; try { return JSON.parse(LS.get(UNDO_KEY) || 'null'); } catch (e) { return null; } };
+function undoSet(snap) {
+  undoMem = snap;
+  if (!snap) { LS.del(UNDO_KEY); return; }
+  try { localStorage.setItem(UNDO_KEY, JSON.stringify(snap)); undoMem = null; } catch (e) { /* too big for storage: kept in memory for this session */ }
+}
+
+const isDay = s => typeof s === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(s);
+/* read a backup file's text; returns { data, exportedAt, skipped } or throws a readable message */
+function parseBackup(txt) {
+  const BAD = 'That file is not a CardWise backup.';
+  let j; try { j = JSON.parse(txt); } catch (e) { throw new Error(BAD); }
+  if (!j || j.app !== 'CardWise' || !j.data || typeof j.data !== 'object') throw new Error(BAD);
+  if ((+j.format || 1) > 1) throw new Error('This backup is from a newer version of the app. Update the app first.');
+  const d = j.data; let skipped = 0;
+  const list = (a, ok) => (Array.isArray(a) ? a : []).filter(x => { const g = x && typeof x === 'object' && typeof x.id === 'string' && x.id && ok(x); if (!g) skipped++; return g; });
+  const num = n => Number.isFinite(+n);
+  const out = {
+    expenses: list(d.expenses, x => num(x.amount)),
+    cards: list(d.cards, x => num(x.limit)),
+    payments: list(d.payments, x => num(x.amt) && x.amt > 0 && isDay(x.date) && typeof x.card === 'string'),
+    maaser: null, home: null, profile: null
+  };
+  out.expenses.forEach(x => { x.amount = +x.amount; });
+  out.cards.forEach(x => { x.limit = +x.limit; });
+  out.payments.forEach(x => { x.amt = +x.amt; });
+  if (d.maaser && typeof d.maaser === 'object' && num(d.maaser.amount)) out.maaser = { amount: Math.max(0, +d.maaser.amount), history: Array.isArray(d.maaser.history) ? d.maaser.history.filter(h => h && num(h.amount) && num(h.timestamp)).slice(-200) : [], updatedAt: +d.maaser.updatedAt || 0 };
+  if (d.home && Array.isArray(d.home.order)) out.home = { order: homeOrder(d.home.order), updatedAt: +d.home.updatedAt || 0 };
+  if (d.profile && typeof d.profile.name === 'string') out.profile = { name: d.profile.name.slice(0, 30), updatedAt: +d.profile.updatedAt || 0 };
+  return { data: out, exportedAt: j.exportedAt || '', skipped };
+}
+
+const snapshotNow = () => ({ at: nowTs(), data: BACKUP_DATA() });
+
+/* Apply backup data. mode: 'replace' (default) or 'merge'. Everything touched gets a fresh timestamp so other devices take it. */
+function restoreData(d, mode) {
+  const t = nowTs(), res = { added: 0, updated: 0, removed: 0 };
+  ['expenses', 'cards', 'payments'].forEach(kind => {
+    const incoming = d[kind] || [], inIds = {};
+    incoming.forEach(x => { inIds[x.id] = x; });
+    if (mode === 'merge') {
+      const local = {}; S[kind].forEach(x => { local[x.id] = x; });
+      incoming.forEach(x => {
+        if (!local[x.id]) { S[kind].push(Object.assign({}, x, { updatedAt: t })); delete S.deleted[kind][x.id]; res.added++; }
+        else if ((x.updatedAt || 0) > (local[x.id].updatedAt || 0)) { S[kind][S[kind].indexOf(local[x.id])] = Object.assign({}, x, { updatedAt: t }); res.updated++; }
+      });
+    } else {
+      S[kind].forEach(x => { if (!inIds[x.id] && x.id !== SUBS_ID) { S.deleted[kind][x.id] = t; res.removed++; } });
+      const before = {}; S[kind].forEach(x => { before[x.id] = 1; });
+      incoming.forEach(x => { delete S.deleted[kind][x.id]; if (before[x.id]) res.updated++; else res.added++; });
+      const keepSubs = kind === 'expenses' && !inIds[SUBS_ID] ? S.expenses.filter(x => x.id === SUBS_ID) : [];
+      S[kind] = incoming.map(x => Object.assign({}, x, { updatedAt: t })).concat(keepSubs);
+    }
+  });
+  if (d.maaser && (mode !== 'merge' || d.maaser.updatedAt > (S.maaser.updatedAt || 0))) S.maaser = Object.assign({}, d.maaser, { updatedAt: t });
+  if (d.home && (mode !== 'merge' || d.home.updatedAt > (S.home.updatedAt || 0))) S.home = { order: d.home.order, updatedAt: t };
+  if (d.profile && d.profile.name && (mode !== 'merge' || d.profile.updatedAt > (S.profile.updatedAt || 0))) S.profile = { name: d.profile.name, updatedAt: t };
+  ensureSubs(); sortCards();
+  S.dirty = { expenses: true, cards: true, payments: true };
+  saveState(); hooks.render(); Sync.schedule(); paintAvatars();
+  return res;
+}
+
+const dayTxt = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }); };
+
+function renderDataPage(host) {
+  const u = undoGet();
+  host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Settings</button></div><h1 class="vt vt2">Data</h1>
+  <div class="hint">A backup file includes your full card details. Keep it somewhere private.</div>
+  <div class="sec">Export</div>
+  <div class="panel sp">${dRow('xj', '#00c805', SET_IC.save, 'Export backup (JSON)', 'Everything, so you can restore it later')}${dRow('xc', '#0094ff', SET_IC.table, 'Export spreadsheet (CSV)', 'Payments, expenses and cards, without card numbers')}</div>
+  <div class="sec">Restore</div>
+  <div class="panel sp">${dRow('xr', '#ffb700', SET_IC.restore, 'Restore from backup', 'Choose a CardWise backup file')}${u ? dRow('xu', '#ff5000', SET_IC.undo, 'Undo last restore', 'Back to how it was on ' + dayTxt(u.at)) : ''}</div>
+  <p class="stat" id="dstat" role="status"></p>
+  <input type="file" id="rfile" accept=".json,application/json,text/plain" hidden>`;
+  const stat = (t, c) => { const s = $('#dstat'); if (s) { s.textContent = t; s.className = 'stat' + (c ? ' ' + c : ''); } };
+  const stamp = tstr();
+  const doSave = async (name, text, mime) => {
+    const r = await saveFile(name, text, mime);
+    stat(r === 'cancelled' ? '' : r === 'shared' ? 'Saved.' : 'Downloaded ' + name + '.', r === 'cancelled' ? '' : 'ok');
+  };
+  $('#xj').onclick = () => doSave('cardwise-backup-' + stamp + '.json', backupJson(), 'application/json');
+  $('#xc').onclick = () => doSave('cardwise-' + stamp + '.csv', backupCsv(), 'text/csv');
+  $('#xr').onclick = () => { $('#rfile').value = ''; $('#rfile').click(); };
+  $('#rfile').onchange = async () => {
+    const f = $('#rfile').files && $('#rfile').files[0]; if (!f) return;
+    try {
+      if (f.size > 40e6) throw new Error('That file is too large to be a backup.');
+      pendingRestore = Object.assign(parseBackup(await f.text()), { name: f.name });
+      renderSettings('restore');
+    } catch (e) { stat(e.message || 'That file could not be read.', 'bad'); }
+  };
+  if ($('#xu')) $('#xu').onclick = async () => {
+    if (!(await confirmDlg('Undo the last restore and go back to how your data was before?', 'Undo'))) return;
+    const snap = undoGet(); if (!snap) return;
+    restoreData(snap.data, 'replace'); undoSet(null);
+    renderDataPage(host); const s = $('#dstat'); if (s) { s.textContent = 'Restored your data from before.'; s.className = 'stat ok'; }
+  };
+}
+const dRow = (id, col, ic, name, sub) => `<button class="row rowb" id="${id}" type="button"><div class="ic" style="color:${col}">${svg(ic, 19)}</div><div class="rm"><div class="val">${name}</div><div class="lab">${sub}</div></div>${svg(IC.right, 18)}</button>`;
+
+function renderRestorePage(host) {
+  const pr = pendingRestore;
+  if (!pr) { renderSettings('data'); return; }
+  const d = pr.data;
+  const mine = { e: S.expenses.filter(x => x.id !== SUBS_ID).length, c: S.cards.length, p: S.payments.length };
+  const theirE = d.expenses.filter(x => x.id !== SUBS_ID).length;
+  const cmp = (name, a, b) => `<div class="row"><div class="rm"><div class="val">${name}</div><div class="lab">On this device: ${b}</div></div><div class="rr"><div class="v">${a}</div></div></div>`;
+  let mode = 'replace';
+  host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Data</button></div><h1 class="vt vt2">Restore</h1>
+  <div class="hint" style="margin-bottom:12px">${pr.exportedAt && dayTxt(pr.exportedAt) ? 'Backup from ' + esc(dayTxt(pr.exportedAt)) + ' · ' : ''}${esc(pr.name)}</div>
+  <div class="sec" style="margin-top:6px">In this backup</div>
+  <div class="panel sp">${cmp('Expenses', theirE, mine.e)}${cmp('Cards', d.cards.length, mine.c)}${cmp('Payments', d.payments.length, mine.p)}${d.maaser ? cmp('Maaser', mf(d.maaser.amount), mf(S.maaser.amount)) : ''}</div>
+  ${pr.skipped ? `<div class="hint" style="margin-top:-4px">${plural(pr.skipped, 'unreadable item')} in the file will be skipped.</div>` : ''}
+  <div class="sec">How to restore</div>
+  <button class="opt on" type="button" data-m="replace"><i></i><span><b>Replace everything</b><small>Your data becomes exactly what is in the backup.</small></span></button>
+  <button class="opt" type="button" data-m="merge"><i></i><span><b>Merge</b><small>Adds what is missing and keeps the newer version of anything in both.</small></span></button>
+  <p class="stat" id="rstat" role="status"></p>
+  <button class="btn" id="rgo" type="button">Restore</button>`;
+  $$('.opt').forEach(b => { b.onclick = () => { mode = b.dataset.m; $$('.opt').forEach(x => x.classList.toggle('on', x === b)); }; });
+  $('#rgo').onclick = async () => {
+    if (mode === 'replace' && !(await confirmDlg('Replace all of your current data with this backup? You can undo it afterwards.', 'Restore'))) return;
+    undoSet(snapshotNow());
+    const r = restoreData(d, mode);
+    pendingRestore = null;
+    const parts = mode === 'merge' ? [plural(r.added, 'item') + ' added', plural(r.updated, 'item') + ' updated'] : [plural(theirE, 'expense'), plural(d.cards.length, 'card'), plural(d.payments.length, 'payment')];
+    host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Data</button></div><div class="pinw" style="padding-top:28px"><div class="okc">${svg(IC.check, 30)}</div><h2>Restored</h2><p class="pmsg">${esc(parts.join(' · '))}${Sync.connected() ? '<br>Syncing to your other devices.' : ''}</p><button class="btn" id="rdone" type="button">Done</button></div>`;
+    $('#rdone').onclick = () => renderSettings('data');
+  };
 }
 
 /* =====================================================================
@@ -1868,7 +2110,13 @@ const PERSON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stro
 const SET_IC = {
   sync: '<path d="M20 12a8 8 0 01-13.7 5.6M4 12a8 8 0 0113.7-5.6"/><path d="M18 3v4h-4M6 21v-4h4"/>',
   key: '<circle cx="8" cy="15" r="3.6"/><path d="M10.6 12.4L19 4M16 7l3 3"/>',
-  home: IC.home
+  home: IC.home,
+  lock: '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+  data: '<ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/>',
+  save: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
+  table: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M4 15h16M10 4v16"/>',
+  restore: '<path d="M12 20V9M7 13l5-5 5 5M5 4h14"/>',
+  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>'
 };
 const firstName = () => { const n = ((S.profile && S.profile.name) || '').trim(); return n ? n.split(/\s+/)[0] : ''; };
 
@@ -1895,6 +2143,12 @@ function renderSettings(page) {
     edDecorate();
   } else if (page === 'sync') {
     renderSyncPage(host);
+  } else if (page === 'pin') {
+    renderPinPage(host);
+  } else if (page === 'data') {
+    renderDataPage(host);
+  } else if (page === 'restore') {
+    renderRestorePage(host);
   } else {
     host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Home</button></div><h1 class="vt vt2">Settings</h1>
     <div class="lcard"><div class="prof"><span class="av big" id="setAv"><b></b></span><div class="pf"><label for="setName">First name</label><input id="setName" type="text" maxlength="30" autocomplete="given-name" placeholder="Your first name" value="${esc((S.profile && S.profile.name) || '')}"></div></div></div>
@@ -1902,7 +2156,11 @@ function renderSettings(page) {
     <div class="sec">Sync</div>
     <div class="panel sp">${setRow('#00c805', SET_IC.sync, 'Status', ' ', 1)}<button class="row rowb" id="setSync" type="button"><div class="ic" style="color:#0094ff">${svg(SET_IC.key, 19)}</div><div class="rm"><div class="val">Sync settings</div><div class="lab">GitHub token and Gist ID</div></div>${svg(IC.right, 18)}</button></div>
     <div class="sec">Home screen</div>
-    <div class="panel sp"><button class="row rowb" id="setHome" type="button"><div class="ic" style="color:#ffb700">${svg(SET_IC.home, 19)}</div><div class="rm"><div class="val">Customize Home</div><div class="lab">Order and size of cards</div></div>${svg(IC.right, 18)}</button></div>`;
+    <div class="panel sp"><button class="row rowb" id="setHome" type="button"><div class="ic" style="color:#ffb700">${svg(SET_IC.home, 19)}</div><div class="rm"><div class="val">Customize Home</div><div class="lab">Order and size of cards</div></div>${svg(IC.right, 18)}</button></div>
+    <div class="sec">Security</div>
+    <div class="panel sp"><button class="row rowb" id="setPin" type="button"><div class="ic" style="color:#9d4edd">${svg(SET_IC.lock, 19)}</div><div class="rm"><div class="val">Change PIN</div><div class="lab">Passcode for card details</div></div>${svg(IC.right, 18)}</button></div>
+    <div class="sec">Data</div>
+    <div class="panel sp"><button class="row rowb" id="setData" type="button"><div class="ic" style="color:#0094ff">${svg(SET_IC.data, 19)}</div><div class="rm"><div class="val">Export and restore</div><div class="lab">Backups, CSV and JSON</div></div>${svg(IC.right, 18)}</button></div>`;
     const inp = $('#setName'); let nt = 0;
     inp.oninput = () => {
       S.profile = { name: inp.value.slice(0, 30), updatedAt: nowTs() };
@@ -1912,12 +2170,14 @@ function renderSettings(page) {
     inp.onkeydown = e => { if (e.key === 'Enter') inp.blur(); };
     $('#setSync').onclick = () => renderSettings('sync');
     $('#setHome').onclick = () => renderSettings('home');
+    $('#setPin').onclick = () => renderSettings('pin');
+    $('#setData').onclick = () => renderSettings('data');
     $$('#setAv').forEach(a => { a.className = 'av big' + (Sync.cur.cls ? ' ' + Sync.cur.cls : ''); });
     $$('.syncT').forEach(x => { x.textContent = Sync.cur.text; }); $$('.sync-v').forEach(x => { x.classList.remove('w', 'e'); if (Sync.cur.cls) x.classList.add(Sync.cur.cls); });
     refreshSetSub();
   }
   paintAvatars();
-  $('#setBack').onclick = () => { if (page === 'main') closeSettings(); else renderSettings('main'); };
+  $('#setBack').onclick = () => { if (page === 'main') closeSettings(); else renderSettings(page === 'restore' ? 'data' : 'main'); };
   $('#settings').scrollTop = 0;
 }
 
