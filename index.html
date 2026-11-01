@@ -446,6 +446,36 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 #sheet .cprow input{margin:0}
 #sheet .mrow2 input{margin:0}
 #sheet .sub-add input,#sheet .n-maaC input{height:44px}
+
+/* ---------- avatar: first letter of your name, ring = sync status ---------- */
+.av{position:relative;width:44px;height:44px;border-radius:50%;flex:none;border:0;padding:0;cursor:pointer;background:var(--g);color:#fff}
+.av::before{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--bg)}
+.av b{position:absolute;inset:5px;border-radius:50%;background:var(--p2);display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700;color:#fff}
+.av b svg{color:var(--mut)}
+.av.w{background:conic-gradient(var(--amb) 0 68%,rgba(255,183,0,.18) 68% 100%)}
+.av.e{background:var(--org)}
+.av.big{width:76px;height:76px;cursor:default}.av.big::before{inset:4px;background:var(--p1)}.av.big b{inset:7px;font-size:30px}.av.big b svg{width:28px;height:28px}
+.av:active:not(.big){transform:scale(.94)}
+/* ---------- settings ---------- */
+#settings{z-index:55}
+.prof{display:flex;align-items:center;gap:16px;padding:16px 0}.pf{flex:1;min-width:0}
+.pf label,#settings label{font-size:13px;color:var(--mut);font-weight:500;margin:0 2px 6px}
+#settings input{background:#0e1b21;border:1px solid var(--line);border-radius:16px;height:52px;padding:0 16px;margin-bottom:14px}
+.pf input{margin:0}
+#settings .hint{margin:-4px 4px 4px}
+.panel.sp{margin-bottom:12px}
+.row.rowb{width:100%}
+.rr .v.sync-v{color:#3dff45}.rr .v.sync-v.w{color:var(--amb)}.rr .v.sync-v.e{color:#ff7a3d}
+.snote{font-size:13px;color:var(--sub);line-height:1.5;margin:0 4px 16px}.snote a{color:#3dff45}
+#settings .btn{height:54px;min-height:54px;border-radius:16px;font-size:17px;font-weight:700;color:#04210a;margin-top:6px}
+#settings .btn.s{color:#e5e7eb}#settings .btn.mini{height:52px;font-size:14px;color:#e5e7eb}
+#settings .btn.d{background:none;color:var(--org);font-size:15px;font-weight:600;height:46px;min-height:46px}
+#settings .cprow input{margin:0}
+#settings .ed-sub{margin:0 4px 16px}
+/* grey bar on every bottom sheet, including the passcode pad */
+#pin>div{border-radius:24px 24px 0 0;padding-top:10px}
+#pin>div::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:#33454d;margin:0 auto 14px}
+#sheet>div,#pin>div{overscroll-behavior:contain}
 </style>
 </head>
 <body>
@@ -453,7 +483,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 <div id="vHome" class="view">
   <div class="top" id="hTop">
     <div><div class="dn" id="hDay"></div><div class="dd" id="hDate"></div></div>
-    <div class="hm-r"><button class="hm-edit" type="button" id="hEditBtn" aria-label="Edit Home layout"></button><button class="pill sync-open" type="button" aria-label="Sync status. Open sync settings"><s></s><span class="syncT">Not connected</span></button></div>
+    <button class="av hav" id="hAvatar" type="button" aria-label="Open settings"><b></b></button>
   </div>
 
   <div id="hList">
@@ -499,16 +529,11 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
     <button class="n-tile hs" type="button" data-k="lim" data-go="cards"><small>Total credit limit</small><b id="hLimit">$0</b></button>
   </div>
 
-  <div id="hEditor" hidden>
-    <div class="ed-h"><div class="ed-t">Edit Home</div><button class="ed-done" id="hDone" type="button">Done</button></div>
-    <div class="ed-sub">Drag a card by its handle to reorder. The top 2 are shown large and the rest are small.</div>
-    <div class="ed-list" id="edList"></div>
-  </div>
 </div>
 
 <!-- ===================== EXPENSES ===================== -->
 <div id="vExp" class="view" hidden>
-  <div class="top"><h1 class="vt">Expenses</h1><button class="pill sync-open" type="button" aria-label="Sync status. Open sync settings"><s></s><span class="syncT">Not connected</span></button></div>
+  <div class="top"><h1 class="vt">Expenses</h1><button class="av hav" type="button" aria-label="Open settings"><b></b></button></div>
   <div class="n-card still n-sum">
     <div class="lbl" style="margin:0">Total monthly expenses</div>
     <div class="n-big"><i>$</i><b id="eTotal">0.00</b></div>
@@ -523,7 +548,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 
 <!-- ===================== CARDS ===================== -->
 <div id="vCards" class="view" hidden>
-  <div class="top"><h1 class="vt">Cards</h1><button class="pill sync-open" type="button" aria-label="Sync status. Open sync settings"><s></s><span class="syncT">Not connected</span></button></div>
+  <div class="top"><h1 class="vt">Cards</h1><button class="av hav" type="button" aria-label="Open settings"><b></b></button></div>
   <div class="n-card still n-sum">
     <div class="lbl" style="margin:0">Total credit limit</div>
     <div class="n-big"><i>$</i><b id="cTotal">0</b></div>
@@ -536,7 +561,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 
 <!-- ===================== PAYMENTS ===================== -->
 <div id="vPay" class="view" hidden>
-  <div class="top"><h1 class="vt">Payments</h1><button class="pill sync-open" type="button" aria-label="Sync status. Open sync settings"><s></s><span class="syncT">Not connected</span></button></div>
+  <div class="top"><h1 class="vt">Payments</h1><button class="av hav" type="button" aria-label="Open settings"><b></b></button></div>
   <div class="n-card still n-sum">
     <div class="n-sumtop"><div><div class="lbl" id="ptl" style="margin:0">Paid this month</div><div class="n-big"><i>$</i><b id="ptotal">0.00</b></div><div class="bsub"><span id="pof"></span></div></div><button class="ib" id="pcal" aria-label="Pick a month"></button></div>
     <div class="cw" id="pchart"></div>
@@ -550,6 +575,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 
 <!-- overlays -->
 <div class="ov" id="detail"><div id="dbody"></div></div>
+<div class="ov" id="settings"><div id="setbody"></div></div>
 <div class="ov" id="pdetail"><div id="pdbody"></div></div>
 <div class="sh" id="sheet" role="dialog" aria-modal="true"><div id="sbody"></div></div>
 <div class="sh" id="pin" role="dialog" aria-modal="true"><div id="pbody"></div></div>
@@ -649,6 +675,7 @@ const EMPTY = () => ({
   expenses: [],
   maaser: { amount: 0, history: [], updatedAt: 0 },
   home: { order: HOME_KEYS.slice(), updatedAt: 0 },
+  profile: { name: '', updatedAt: 0 },
   cards: [],
   payments: [],
   deleted: { expenses: {}, cards: {}, payments: {} },
@@ -671,6 +698,7 @@ function loadState() {
       ['expenses', 'cards', 'payments'].forEach(k => { if (!S.deleted[k] || typeof S.deleted[k] !== 'object') S.deleted[k] = {}; });
       if (!Array.isArray(S.maaser.history)) S.maaser.history = [];
       S.home = { order: homeOrder(j.home && j.home.order), updatedAt: (j.home && +j.home.updatedAt) || 0 };
+      S.profile = { name: String((j.profile && j.profile.name) || '').slice(0, 30), updatedAt: (j.profile && +j.profile.updatedAt) || 0 };
     }
   } catch (e) { S = EMPTY(); }
   sortCards();
@@ -727,23 +755,28 @@ const Sync = {
   gist() { return LS.get('et_gist') || ''; },
   connected() { return !!(this.token() && this.gist()); },
 
+  cur: { text: 'Not connected', cls: 'e' }, lastOk: 0,
   status(text, cls) {
+    this.cur = { text, cls: cls || '' };
+    if (text === 'Synced') this.lastOk = Date.now();
     $$('.syncT').forEach(x => { x.textContent = text; });
-    $$('.pill').forEach(x => { x.className = 'pill sync-open' + (cls ? ' ' + cls : ''); });
+    $$('.sync-v').forEach(x => { x.classList.remove('w', 'e'); if (cls) x.classList.add(cls); });
+    $$('.av').forEach(x => { x.classList.remove('w', 'e'); if (cls) x.classList.add(cls); });
+    paintAvatars(); refreshSetSub();
   },
   headers() {
     return { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + this.token(), 'Content-Type': 'application/json' };
   },
 
   serialize(kind) {
-    if (kind === 'expenses') return { version: 1, expenses: S.expenses, maaser: S.maaser, home: S.home, deleted: S.deleted.expenses };
+    if (kind === 'expenses') return { version: 1, expenses: S.expenses, maaser: S.maaser, home: S.home, profile: S.profile, deleted: S.deleted.expenses };
     if (kind === 'cards') return { version: 1, cards: S.cards, deleted: S.deleted.cards };
     return { version: 2, payments: S.payments, deleted: S.deleted.payments };
   },
 
   /* merge what is in the gist into local data; returns true if anything visible changed */
   mergeIn(remote) {
-    const before = canon({ e: S.expenses, m: S.maaser, h: S.home, c: S.cards, p: S.payments });
+    const before = canon({ e: S.expenses, m: S.maaser, h: S.home, n: S.profile, c: S.cards, p: S.payments });
     const rx = remote.expenses || {}, rc = remote.cards || {}, rp = remote.payments || {};
     const e = mergeList(S.expenses, rx.expenses, S.deleted.expenses, rx.deleted);
     S.expenses = e.items; S.deleted.expenses = e.tombs;
@@ -753,11 +786,14 @@ const Sync = {
     if (rx.home && typeof rx.home === 'object' && (+rx.home.updatedAt || 0) > (S.home.updatedAt || 0)) {
       S.home = { order: homeOrder(rx.home.order), updatedAt: +rx.home.updatedAt };
     }
+    if (rx.profile && typeof rx.profile === 'object' && (+rx.profile.updatedAt || 0) > (S.profile.updatedAt || 0)) {
+      S.profile = { name: String(rx.profile.name || '').slice(0, 30), updatedAt: +rx.profile.updatedAt };
+    }
     const c = mergeList(S.cards, rc.cards, S.deleted.cards, rc.deleted);
     S.cards = c.items; S.deleted.cards = c.tombs; sortCards();
     const p = mergeList(S.payments, rp.payments, S.deleted.payments, rp.deleted);
     S.payments = p.items; S.deleted.payments = p.tombs;
-    return before !== canon({ e: S.expenses, m: S.maaser, h: S.home, c: S.cards, p: S.payments });
+    return before !== canon({ e: S.expenses, m: S.maaser, h: S.home, n: S.profile, c: S.cards, p: S.payments });
   },
 
   async parseFiles(j) {
@@ -890,43 +926,39 @@ function confirmDlg(message, okText) {
   });
 }
 
-function openSetup(first) {
-  const connected = Sync.connected();
-  Sheet.open(`<h2>Sync</h2>
-  <p>One private GitHub gist holds everything: expenses, cards and payments. Connect once and every tab stays in sync across your devices. Create a token at
-  <a href="https://github.com/settings/tokens/new?scopes=gist&description=CardWise" target="_blank" rel="noopener">github.com/settings/tokens</a> with the <b>gist</b> permission.</p>
-  <label for="st">GitHub token</label>
-  <input id="st" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ghp_..." value="${esc(Sync.token())}">
-  <label for="sg">Gist ID <span style="color:var(--mut)">(leave blank the first time)</span></label>
-  <div class="cprow"><input id="sg" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="created for you on connect" value="${esc(Sync.gist())}"><button class="btn s mini" id="scp" type="button">Copy</button></div>
-  <p class="stat" id="sstat" role="status"></p>
-  <button class="btn" id="sc" type="button">Save and connect</button>
-  <button class="btn s" id="sx" type="button">${first ? 'Skip for now' : 'Close'}</button>
-  ${connected ? '<button class="btn d" id="sdis" type="button">Disconnect this device</button>' : ''}`, b => {
-    const stat = (t, c) => { $('#sstat').textContent = t; $('#sstat').className = 'stat' + (c ? ' ' + c : ''); };
-    if (connected) stat('Connected. Use the same token and Gist ID on your other devices.', 'ok');
-    $('#sx').onclick = closeSheet;
-    $('#scp').onclick = async () => {
-      const v = $('#sg').value.trim(); if (!v) return;
-      try { await navigator.clipboard.writeText(v); $('#scp').textContent = 'Copied'; setTimeout(() => { const x = $('#scp'); if (x) x.textContent = 'Copy'; }, 1500); } catch (e) {}
-    };
-    $('#sc').onclick = async () => {
-      const token = $('#st').value.trim(), gist = $('#sg').value.trim();
-      if (!token) { stat('A personal access token is required.', 'bad'); return; }
-      stat('Connecting...', '');
-      $('#sc').disabled = true;
-      try {
-        await Sync.connect(token, gist);
-        $('#sg').value = Sync.gist();
-        stat('Connected. Use the same token and Gist ID on your other devices.', 'ok');
-        hooks.render();
-      } catch (e) { stat(e.message || 'Could not connect.', 'bad'); }
-      $('#sc').disabled = false;
-    };
-    if ($('#sdis')) $('#sdis').onclick = async () => {
-      if (await confirmDlg('Disconnect this device? Your data stays on the device but stops syncing.', 'Disconnect')) { Sync.disconnect(); closeSheet(); }
-    };
+/* Drag a bottom sheet down by its grey bar (or title) to close it. Past halfway, or a quick flick, closes; otherwise it springs back. */
+function swipeClose(sheet, close) {
+  const panel = sheet.firstElementChild, ZONE = 64;
+  let D = null;
+  const begin = (y, id) => {
+    const r = panel.getBoundingClientRect();
+    if (D || y - r.top > ZONE || y < r.top || panel.scrollTop > 0) return false;
+    D = { id, y0: y, t0: performance.now(), dy: 0, h: r.height };
+    panel.style.transition = 'none'; sheet.style.transition = 'none';
+    return true;
+  };
+  const move = y => {
+    D.dy = Math.max(0, y - D.y0);
+    panel.style.transform = 'translateY(' + D.dy + 'px)';
+    sheet.style.background = 'rgba(0,0,0,' + (0.6 * (1 - Math.min(1, D.dy / D.h))).toFixed(3) + ')';
+  };
+  const finish = cancel => {
+    if (!D) return;
+    const d = D; D = null;
+    const fast = d.dy > 40 && d.dy / Math.max(1, performance.now() - d.t0) > 0.6;
+    panel.style.transition = ''; sheet.style.transition = '';
+    panel.style.transform = ''; sheet.style.background = '';
+    if (!cancel && (d.dy > d.h * 0.4 || fast)) close();
+  };
+  panel.addEventListener('pointerdown', e => {
+    if (e.button > 0 || !begin(e.clientY, e.pointerId)) return;
+    try { panel.setPointerCapture(e.pointerId); } catch (_) {}
   });
+  panel.addEventListener('pointermove', e => { if (D && e.pointerId === D.id) move(e.clientY); });
+  panel.addEventListener('pointerup', e => { if (D && e.pointerId === D.id) finish(false); });
+  panel.addEventListener('pointercancel', e => { if (D && e.pointerId === D.id) finish(true); });
+  /* stop the page from scrolling while the sheet is being dragged */
+  panel.addEventListener('touchmove', e => { if (D) e.preventDefault(); }, { passive: false });
 }
 
 /* =====================================================================
@@ -1039,6 +1071,7 @@ function renderNextUp() {
 
 function renderHome() {
   const d = new Date();
+  paintAvatars();
   $('#hDay').textContent = d.toLocaleDateString('en-US', { weekday: 'long' });
   $('#hDate').textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -1144,18 +1177,11 @@ function edDecorate() {
   const dv = $('#edList .ed-div');
   if (dv) $('#edList').insertBefore(dv, rows[2] || null);
 }
-function enterHomeEdit() {
-  const l = $('#edList');
-  l.innerHTML = S.home.order.map(k => `<div class="ed-row" data-k="${k}"><span class="n"></span><span class="nm">${esc(HOME_NAMES[k])}</span><span class="tag"></span><button class="hd" type="button" aria-label="Reorder ${esc(HOME_NAMES[k])}. Use the up and down arrow keys to move it.">${svg(IC.grip, 22)}</button></div>`).join('')
-    + '<div class="ed-div">Small cards below</div>';
-  edDecorate();
-  $('#vHome').classList.add('editing'); $('#hEditor').hidden = false;
-  window.scrollTo(0, 0);
-}
-function exitHomeEdit() {
-  if (!$('#vHome').classList.contains('editing')) return;
-  $('#vHome').classList.remove('editing'); $('#hEditor').hidden = true;
-  renderHome(); window.scrollTo(0, 0);
+/* the reorder list lives on the Customize Home page inside Settings */
+function homeEditorHtml() {
+  return '<div class="ed-sub">Drag a card by its handle to reorder. The top 2 are shown large and the rest are small.</div><div class="ed-list" id="edList">'
+    + S.home.order.map(k => `<div class="ed-row" data-k="${k}"><span class="n"></span><span class="nm">${esc(HOME_NAMES[k])}</span><span class="tag"></span><button class="hd" type="button" aria-label="Reorder ${esc(HOME_NAMES[k])}. Use the up and down arrow keys to move it.">${svg(IC.grip, 22)}</button></div>`).join('')
+    + '<div class="ed-div">Small cards below</div></div>';
 }
 function edSave() {
   const o = edRows().map(r => r.dataset.k);
@@ -1164,13 +1190,11 @@ function edSave() {
   commit('expenses');
 }
 function bindHomeEdit() {
-  $('#hEditBtn').innerHTML = svg(IC.edit, 18);
-  $('#hEditBtn').onclick = enterHomeEdit;
-  $('#hDone').onclick = exitHomeEdit;
   $('#sMaaBtn').onclick = openMaaser;
-  const list = $('#edList'); let d = null;
-  const layoutTop = row => list.getBoundingClientRect().top + row.offsetTop;
-  list.addEventListener('pointerdown', e => {
+  /* the list is rebuilt each time the page opens, so listen on its stable parent */
+  const host = $('#setbody'); let d = null;
+  const layoutTop = row => $('#edList').getBoundingClientRect().top + row.offsetTop;
+  host.addEventListener('pointerdown', e => {
     const h = e.target.closest('.hd');
     if (!h || e.button > 0) return;
     const row = h.closest('.ed-row');
@@ -1179,14 +1203,14 @@ function bindHomeEdit() {
     try { h.setPointerCapture(e.pointerId); } catch (_) {}
     e.preventDefault();
   });
-  list.addEventListener('pointermove', e => {
+  host.addEventListener('pointermove', e => {
     if (!d || e.pointerId !== d.id) return;
     const want = d.startTop + (e.clientY - d.startY);
     const rows = edRows(), others = rows.filter(x => x !== d.row);
     const mid = want + d.row.offsetHeight / 2;
     let idx = 0;
     others.forEach(x => { if (layoutTop(x) + x.offsetHeight / 2 < mid) idx++; });
-    if (idx !== rows.indexOf(d.row)) { list.insertBefore(d.row, others[idx] || null); edDecorate(); }
+    if (idx !== rows.indexOf(d.row)) { $('#edList').insertBefore(d.row, others[idx] || null); edDecorate(); }
     d.ty = want - layoutTop(d.row);
     d.row.style.transform = 'translateY(' + d.ty.toFixed(1) + 'px) scale(1.03)';
   });
@@ -1195,15 +1219,15 @@ function bindHomeEdit() {
     d.row.classList.remove('drag'); d.row.style.transform = '';
     d = null; edSave();
   };
-  list.addEventListener('pointerup', end);
-  list.addEventListener('pointercancel', end);
-  list.addEventListener('keydown', e => {
+  host.addEventListener('pointerup', end);
+  host.addEventListener('pointercancel', end);
+  host.addEventListener('keydown', e => {
     const h = e.target.closest('.hd');
     if (!h || (e.key !== 'ArrowUp' && e.key !== 'ArrowDown')) return;
     e.preventDefault();
     const row = h.closest('.ed-row'), rows = edRows(), i = rows.indexOf(row), j = i + (e.key === 'ArrowUp' ? -1 : 1);
     if (j < 0 || j >= rows.length) return;
-    list.insertBefore(row, e.key === 'ArrowUp' ? rows[j] : rows[j].nextSibling);
+    $('#edList').insertBefore(row, e.key === 'ArrowUp' ? rows[j] : rows[j].nextSibling);
     edDecorate(); edSave(); h.focus();
   });
 }
@@ -1837,6 +1861,106 @@ function bindPayments() {
 }
 
 /* =====================================================================
+   Settings: name, sync and Home customization, as pages inside one overlay
+   ===================================================================== */
+let setPage = 'main';
+const PERSON = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="9" r="3.6"/><path d="M5 20c1.2-3.6 4-5 7-5s5.8 1.4 7 5"/></svg>';
+const SET_IC = {
+  sync: '<path d="M20 12a8 8 0 01-13.7 5.6M4 12a8 8 0 0113.7-5.6"/><path d="M18 3v4h-4M6 21v-4h4"/>',
+  key: '<circle cx="8" cy="15" r="3.6"/><path d="M10.6 12.4L19 4M16 7l3 3"/>',
+  home: IC.home
+};
+const firstName = () => { const n = ((S.profile && S.profile.name) || '').trim(); return n ? n.split(/\s+/)[0] : ''; };
+
+/* the avatar: first letter of the first name; the ring shows sync status */
+function paintAvatars() {
+  const n = firstName(), ch = n ? Array.from(n)[0].toUpperCase() : '';
+  $$('.av b').forEach(b => { if (ch) b.textContent = ch; else b.innerHTML = PERSON; });
+  const st = (Sync.cur && Sync.cur.text) || 'Not connected';
+  $$('.hav').forEach(a => a.setAttribute('aria-label', (n ? n + '. ' : '') + 'Sync status: ' + st + '. Open settings'));
+}
+const agoTxt = t => { const m = Math.floor((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + (m === 1 ? ' minute ago' : ' minutes ago') : Math.floor(m / 60) + (m < 120 ? ' hour ago' : ' hours ago'); };
+function refreshSetSub() {
+  const el = $('#setSub'); if (!el) return;
+  el.textContent = !Sync.connected() ? 'Data is saved on this device only' : (Sync.cur.text === 'Synced' && Sync.lastOk ? 'Last synced ' + agoTxt(Sync.lastOk) : 'Connected to your GitHub gist');
+}
+
+const setRow = (col, ic, name, sub, right) => `<div class="row"><div class="ic" style="color:${col}">${svg(ic, 19)}</div><div class="rm"><div class="val">${name}</div>${sub ? `<div class="lab"${right === 1 ? ' id="setSub"' : ''}>${sub}</div>` : ''}</div>${right === 1 ? '<div class="rr"><div class="v sync-v syncT"></div></div>' : svg(IC.right, 18)}</div>`;
+
+function renderSettings(page) {
+  setPage = page;
+  const host = $('#setbody');
+  if (page === 'home') {
+    host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Settings</button></div><h1 class="vt vt2">Customize Home</h1>` + homeEditorHtml();
+    edDecorate();
+  } else if (page === 'sync') {
+    renderSyncPage(host);
+  } else {
+    host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Home</button></div><h1 class="vt vt2">Settings</h1>
+    <div class="lcard"><div class="prof"><span class="av big" id="setAv"><b></b></span><div class="pf"><label for="setName">First name</label><input id="setName" type="text" maxlength="30" autocomplete="given-name" placeholder="Your first name" value="${esc((S.profile && S.profile.name) || '')}"></div></div></div>
+    <div class="hint">Shown on your avatar. Syncs to your other devices.</div>
+    <div class="sec">Sync</div>
+    <div class="panel sp">${setRow('#00c805', SET_IC.sync, 'Status', ' ', 1)}<button class="row rowb" id="setSync" type="button"><div class="ic" style="color:#0094ff">${svg(SET_IC.key, 19)}</div><div class="rm"><div class="val">Sync settings</div><div class="lab">GitHub token and Gist ID</div></div>${svg(IC.right, 18)}</button></div>
+    <div class="sec">Home screen</div>
+    <div class="panel sp"><button class="row rowb" id="setHome" type="button"><div class="ic" style="color:#ffb700">${svg(SET_IC.home, 19)}</div><div class="rm"><div class="val">Customize Home</div><div class="lab">Order and size of cards</div></div>${svg(IC.right, 18)}</button></div>`;
+    const inp = $('#setName'); let nt = 0;
+    inp.oninput = () => {
+      S.profile = { name: inp.value.slice(0, 30), updatedAt: nowTs() };
+      saveState(); paintAvatars();
+      clearTimeout(nt); nt = setTimeout(() => commit('expenses'), 500);
+    };
+    inp.onkeydown = e => { if (e.key === 'Enter') inp.blur(); };
+    $('#setSync').onclick = () => renderSettings('sync');
+    $('#setHome').onclick = () => renderSettings('home');
+    $$('#setAv').forEach(a => { a.className = 'av big' + (Sync.cur.cls ? ' ' + Sync.cur.cls : ''); });
+    $$('.syncT').forEach(x => { x.textContent = Sync.cur.text; }); $$('.sync-v').forEach(x => { x.classList.remove('w', 'e'); if (Sync.cur.cls) x.classList.add(Sync.cur.cls); });
+    refreshSetSub();
+  }
+  paintAvatars();
+  $('#setBack').onclick = () => { if (page === 'main') closeSettings(); else renderSettings('main'); };
+  $('#settings').scrollTop = 0;
+}
+
+function renderSyncPage(host) {
+  const connected = Sync.connected();
+  host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Settings</button></div><h1 class="vt vt2">Sync</h1>
+  <p class="snote">One private GitHub gist holds everything: expenses, cards and payments. Connect once and every tab stays in sync across your devices. Create a token at
+  <a href="https://github.com/settings/tokens/new?scopes=gist&description=CardWise" target="_blank" rel="noopener">github.com/settings/tokens</a> with the <b>gist</b> permission.</p>
+  <label for="st">GitHub token</label>
+  <input id="st" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="ghp_..." value="${esc(Sync.token())}">
+  <label for="sg">Gist ID <span style="color:var(--mut)">(leave blank the first time)</span></label>
+  <div class="cprow"><input id="sg" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="created for you on connect" value="${esc(Sync.gist())}"><button class="btn s mini" id="scp" type="button">Copy</button></div>
+  <p class="stat" id="sstat" role="status"></p>
+  <button class="btn" id="sc" type="button">${connected ? 'Save and reconnect' : 'Save and connect'}</button>
+  ${connected ? '<button class="btn d" id="sdis" type="button">Disconnect this device</button>' : ''}`;
+  const stat = (t, c) => { $('#sstat').textContent = t; $('#sstat').className = 'stat' + (c ? ' ' + c : ''); };
+  if (connected) stat('Connected. Use the same token and Gist ID on your other devices.', 'ok');
+  $('#scp').onclick = async () => {
+    const v = $('#sg').value.trim(); if (!v) return;
+    try { await navigator.clipboard.writeText(v); $('#scp').textContent = 'Copied'; setTimeout(() => { const x = $('#scp'); if (x) x.textContent = 'Copy'; }, 1500); } catch (e) {}
+  };
+  $('#sc').onclick = async () => {
+    const token = $('#st').value.trim(), gist = $('#sg').value.trim();
+    if (!token) { stat('A personal access token is required.', 'bad'); return; }
+    stat('Connecting...', '');
+    $('#sc').disabled = true;
+    try {
+      await Sync.connect(token, gist);
+      $('#sg').value = Sync.gist();
+      stat('Connected. Use the same token and Gist ID on your other devices.', 'ok');
+      hooks.render();
+    } catch (e) { stat(e.message || 'Could not connect.', 'bad'); }
+    $('#sc').disabled = false;
+  };
+  if ($('#sdis')) $('#sdis').onclick = async () => {
+    if (await confirmDlg('Disconnect this device? Your data stays on the device but stops syncing.', 'Disconnect')) { Sync.disconnect(); renderSettings('sync'); }
+  };
+}
+
+function openSettings(page) { renderSettings(page || 'main'); $('#settings').classList.add('on'); }
+function closeSettings() { $('#settings').classList.remove('on'); setPage = 'main'; renderHome(); }
+
+/* =====================================================================
    Main: tabs, floating button, rendering, startup
    ===================================================================== */
 const TABS = [
@@ -1897,7 +2021,6 @@ function setTab(t) {
   TABS.forEach(x => { $(x.v).hidden = x.t !== t; });
   $$('.tb').forEach(b => { b.classList.toggle('on', b.dataset.t === t); if (b.dataset.t === t) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
   closePayDetail();
-  if (t !== 'home') exitHomeEdit();
   $('#fab').hidden = t === 'home';
   $('#fab').setAttribute('aria-label', t === 'exp' ? 'Add expense' : t === 'cards' ? 'Add card' : 'Add payment');
   window.scrollTo(0, 0);
@@ -1969,7 +2092,7 @@ function bindGlobal() {
   document.addEventListener('click', e => {
     const go = e.target.closest('[data-go]');
     if (go) setTab(go.dataset.go);
-    if (e.target.closest('.sync-open')) openSetup(false);
+    if (e.target.closest('.hav')) openSettings('main');
   });
 
   /* floating add button follows the current tab */
@@ -2000,11 +2123,15 @@ function bindGlobal() {
   /* dismiss sheets by tapping the dim area, or Escape */
   $('#sheet').addEventListener('pointerdown', e => { if (e.target.id === 'sheet') closeSheet(); });
   $('#pin').addEventListener('pointerdown', e => { if (e.target.id === 'pin') $('#pin').classList.remove('on'); });
+  /* swipe a sheet down by its grey bar to close it */
+  swipeClose($('#sheet'), closeSheet);
+  swipeClose($('#pin'), () => $('#pin').classList.remove('on'));
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if ($('#cf').classList.contains('on')) $('#cfc').click();
     else if ($('#pin').classList.contains('on')) $('#pin').classList.remove('on');
     else if (Sheet.isOpen()) closeSheet();
+    else if ($('#settings').classList.contains('on')) $('#setBack').click();
   });
 
   /* another tab of this app changed the data */
@@ -2026,10 +2153,7 @@ function init() {
   addEventListener('resize', () => glideKick(true));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => glideKick(true));
   if (Sync.connected()) { Sync.status('Syncing', 'w'); Sync.run(); }
-  else {
-    Sync.status('Not connected', 'e');
-    if (!LS.get('et_seen')) { LS.set('et_seen', '1'); openSetup(true); }
-  }
+  else Sync.status('Not connected', 'e');
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js').catch(() => {});
   }
