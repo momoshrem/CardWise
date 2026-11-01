@@ -892,8 +892,10 @@ function renderNextUp() {
       <div class="n-ends">${st ? `<span>Last closed ${esc(short(stmt))}</span><span>Closes ${esc(short(date))}</span>`
         : `<span>${many ? 'Statements' : 'Statement'} closed ${esc(short(stmt))}</span><span>Due ${esc(short(date))}</span>`}</div>`;
   const chip = (c, tag) => `<span class="n-chip"><i style="background:${esc(cCol(c.id))}"></i><span>${esc(lbl(c))}</span>${tag ? `<em class="n-tag ${tag === 'DUE' ? 'p' : 's'}">${tag}</em>` : ''}</span>`;
+  /* several chips share one row, shrunk to fit; same-day payment + statement chips carry a tag */
   const chips = both
     ? `<div class="n-fitrow">${group.map(c => chip(c, 'DUE')).join('')}${other.map(c => chip(c, 'STATEMENT')).join('')}</div>`
+    : many ? `<div class="n-fitrow">${group.map(c => chip(c)).join('')}</div>`
     : group.map(c => chip(c)).join('');
   const names = a => a.map(c => esc(lbl(c))).join(', ');
   let thenTxt = '';
