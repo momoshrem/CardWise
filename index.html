@@ -326,6 +326,126 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .tbi::after{content:"";display:block;position:absolute;left:50%;right:auto;top:-3px;width:84px;height:62px;margin-left:-42px;border-radius:50%;
   background:radial-gradient(closest-side,rgba(61,255,69,.30),rgba(61,255,69,0))}
 @supports (-webkit-touch-callout:none){ .tbi{top:2px} .tbi::after{top:-6px;height:58px} }
+
+/* =====================================================================
+   Redesign: big titles, summary cards, grouped list cards, quieter sheets
+   ===================================================================== */
+/* header: big title + sync pill on every tab, everything centred on one line */
+.top{align-items:center}
+.vt{margin:0;font-size:30px;font-weight:700;letter-spacing:-.02em;color:#fff;line-height:1.15}
+.vt2{padding:2px 2px 14px}
+.pill{margin-top:0;font-family:inherit;font-size:13px;font-weight:500}
+.pill .syncT{font-family:inherit}
+.hm-r{align-items:center}.hm-edit{margin-top:0}
+#hTop>div:first-child{display:flex;align-items:baseline;gap:10px;min-width:0}
+#hDay{font-size:30px;font-weight:700;color:#fff;letter-spacing:-.02em;margin:0}
+#hDate{font-size:20px;font-weight:400;color:var(--mut);margin:0}
+.lbl{font-size:13px;letter-spacing:0;text-transform:none;color:var(--mut);font-weight:500}
+.n-maaT{font-size:13px;letter-spacing:0;text-transform:none;color:var(--mut)}
+.n-card{border-radius:22px}.n-tile{border-radius:22px}
+.n-sum{margin-bottom:12px}
+.n-sum .n-big{margin:4px 0 6px}
+.n-sum .n-wrow{margin-top:14px;gap:20px}
+.n-sum .bsub{font-size:13px;display:block}
+.n-sumtop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.n-sg{display:flex;gap:3px;height:12px;margin-top:14px}.n-sg i{display:block;height:100%;border-radius:4px;min-width:4px}.n-sg:empty{display:none}
+/* donut + legend */
+.n-donut{width:112px;height:112px}.n-donut svg{width:100%;height:100%}
+.n-lg{gap:9px;font-size:13px}.n-lg em{font-family:inherit;font-size:13px;color:var(--mut)}.n-lg span{color:var(--sub)}.n-lg i{width:9px;height:9px}
+/* Maaser row */
+.n-mrow{background:rgba(0,200,5,.07);border:1px solid rgba(0,200,5,.35);border-radius:22px;padding:14px 18px;margin-bottom:12px}
+/* grouped list card */
+.lcard{background:var(--p1);border:1px solid var(--line);border-radius:22px;padding:0 16px;margin-bottom:12px}
+#eList>.xr:last-child,#eList>.xs:last-child{border-bottom:0}
+.xr{padding:13px 0;min-height:52px}
+.xr b{font-size:15px;font-weight:600;color:#fff}
+.xr small{font-style:normal;color:var(--mut)}
+.xa{font-weight:600;font-size:15px;line-height:1.2;font-family:inherit;color:#fff;background:none;border-radius:0;padding:0}
+.n-mrow .xa{font-size:15px}
+.xs{padding:0 0 14px 22px}
+.si .r span{font-family:inherit}.sub-add .sa{font-family:inherit}.n-maaC input,.mrow2 input{font-family:inherit}
+.emp{text-align:center;padding:26px 12px 28px;border-top:1px solid var(--line)}
+.emp:only-child,#eList:empty+.emp{border-top:0}
+.emp .ei{width:46px;height:46px;border-radius:15px;background:#0e1b21;color:var(--mut);display:flex;align-items:center;justify-content:center;margin:0 auto 12px}
+.emp b{display:block;font-size:16px;color:#fff;font-weight:600}.emp span{display:block;font-size:13px;color:var(--mut);margin-top:4px}
+/* cards tab */
+#cSum{border-radius:22px;border:1px solid var(--line);padding:2px 16px;margin-bottom:6px}
+.ic{width:34px;height:34px;border-radius:11px;background:color-mix(in srgb,currentColor 16%,transparent)}
+.sr .ic{width:34px;height:34px;border-radius:11px}
+#cCount{font-size:13px;color:var(--sub);font-weight:600;margin:14px 4px 10px}
+/* payments tab */
+.n-sum .cw{background:none;border:0;border-radius:0;padding:14px 0 0;margin:0}
+.n-sum .cw::before{display:none}
+.n-sum .sc{padding-right:0}
+.sc>.cols,.sc>.labs{min-width:100%}
+.cols{height:116px;justify-content:space-evenly;border-bottom:1px solid var(--line)}
+.col{width:60px;height:116px;border-radius:10px 10px 0 0}.col>div{width:40px}
+.col>div+div{margin-bottom:-.5px}
+.col.sel{background:rgba(255,255,255,.045)}
+.labs{justify-content:space-evenly;padding-top:8px;font-size:12px}.labs span{width:60px}
+.labs .on{color:#3dff45;font-weight:700}
+.ib{border-radius:12px;width:40px;height:40px;background:#0e1b21;flex-shrink:0}
+.hh{margin:12px 4px 8px}
+.hh .sec{margin:0;font-weight:600}
+#plist .pr{background:none;border:0;border-bottom:1px solid var(--line);border-radius:0;margin:0;padding:12px 0;gap:12px}
+#plist .pr:last-child{border-bottom:0}
+.pr .pd{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.pr b{font-size:15px;font-weight:600}.pr small{display:block;margin-top:2px}
+.pr .pv{font-size:15px;font-weight:600}
+#plist .empty{padding:24px 0}
+/* detail pages */
+.ov .nav{margin-bottom:10px}
+.pillb{background:var(--p2);border:1px solid var(--line);border-radius:999px;padding:0 16px;min-height:38px;color:#fff;font-size:14px;font-weight:600;cursor:pointer}
+.ov .panel{border-radius:22px;border:1px solid var(--line);padding:2px 16px}
+.ov .panel .row{gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.ov .panel .row:last-child{border:0}
+.row .val{font-size:15px;font-weight:600;color:#fff}.row .lab{font-size:12px;color:var(--mut);margin:2px 0 0}
+.rr{text-align:right}.rr .v{font-size:15px;font-weight:600;color:#fff}.rr .s{font-size:12px;color:var(--mut);margin-top:2px}
+.rowb .cc-sw{width:46px;height:26px;border-radius:9px;border:1px solid rgba(255,255,255,.22)}
+.rowb{padding:12px 0}
+.n-sum .thb{width:84px;border-radius:10px}
+.pdm{flex:1;min-width:0}.pdm .pm2{font-size:32px;font-weight:600;letter-spacing:-.02em}.pdm .pm1,.pdm .pm3,.pdm .pm4{font-size:12px}
+.lcard .mr{gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}.lcard .mr:last-child{border:0}
+.dt{width:34px;height:34px;border-radius:11px;background:#0e1b21;display:flex;flex-direction:column;align-items:center;justify-content:center;flex-shrink:0;line-height:1}.dt b{font-size:14px;color:#fff;font-weight:600}.dt s{text-decoration:none;font-size:9px;color:var(--mut);margin-top:2px}
+.lcard .mr .pl b{font-size:15px;font-weight:600}
+.lcard .mr svg{color:var(--mut)}
+#pdetail .sec{margin:6px 4px 8px;font-weight:600}
+/* add / edit sheets: a little calmer */
+#sheet>div{border-radius:24px 24px 0 0;padding:10px 16px calc(20px + env(safe-area-inset-bottom))}
+#sheet>div::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:#33454d;margin:0 auto 14px}
+#sheet h2{font-size:21px;font-weight:700;letter-spacing:-.01em;margin:0 0 16px}
+#sheet label{font-size:13px;color:var(--mut);font-weight:500;margin:0 2px 6px}
+#sheet input,#sheet select,#sheet textarea{background:#0e1b21;border:1px solid var(--line);border-radius:16px}
+#sheet input,#sheet select{height:52px;padding:0 16px;margin-bottom:14px}
+#sheet textarea{padding:14px 16px;margin-bottom:14px}
+#sheet input[type=file]{height:auto}
+#sheet .fa{position:relative}
+#sheet .fa span{position:absolute;left:16px;top:0;height:52px;display:flex;align-items:center;color:var(--mut);font-size:16px;pointer-events:none}
+#sheet .fa input{padding-left:32px}
+#sheet .fs{position:relative}
+#sheet .fs i{position:absolute;left:16px;top:20px;width:11px;height:8px;border-radius:2px;pointer-events:none}
+#sheet .fs select{padding-left:38px;padding-right:40px}
+#sheet .fs::after{content:"";position:absolute;right:18px;top:19px;width:8px;height:8px;border-right:2px solid var(--mut);border-bottom:2px solid var(--mut);transform:rotate(45deg);pointer-events:none}
+#sheet .drow{height:52px;min-height:52px;border-radius:16px;background:#0e1b21;border:1px solid var(--line);padding:0 16px;margin-bottom:14px}
+#sheet .drow .lk{color:#3dff45;font-weight:600;font-size:15px}
+#sheet .zseg{background:#0e1b21;border:1px solid var(--line);border-radius:16px;margin:0 0 14px}
+#sheet .zseg button{border-radius:12px;font-size:15px}
+#sheet .zseg button.on{background:var(--p2);color:#fff;box-shadow:none}
+#sheet .zseg button.zg2.on{background:rgba(61,255,69,.14);color:#3dff45;box-shadow:inset 0 0 0 1px rgba(61,255,69,.3)}
+#sheet .zsub{color:#3dff45;font-size:12.5px;margin:-4px 2px 14px}
+#sheet .btn{height:54px;min-height:54px;border-radius:16px;font-size:17px;font-weight:700;color:#04210a;margin-top:6px}
+#sheet .btn.z{background:#3dff45}
+#sheet .btn.s{color:#e5e7eb}
+#sheet .btn.cx{background:none;color:var(--sub);font-size:16px;font-weight:600;height:46px;min-height:46px;margin-top:2px}
+#sheet .btn.d{color:var(--org);background:none;font-size:15px;font-weight:600;height:46px;min-height:46px}
+#sheet .btn.d2{color:#fecaca}
+#sheet .cfb .btn{font-size:15px;font-weight:600}
+#sheet .btn.mini{height:52px}
+#sheet .two label{min-height:34px;display:flex;align-items:flex-end}
+#sheet .two input{margin-bottom:14px}
+#sheet .upb{border-radius:16px;min-height:60px}
+#sheet .cprow input{margin:0}
+#sheet .mrow2 input{margin:0}
+#sheet .sub-add input,#sheet .n-maaC input{height:44px}
 </style>
 </head>
 <body>
@@ -388,24 +508,26 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 
 <!-- ===================== EXPENSES ===================== -->
 <div id="vExp" class="view" hidden>
-  <div class="top">
-    <div><div class="lbl">Total monthly expenses</div><div class="tot"><i>$</i><b id="eTotal">0.00</b></div></div>
-    <button class="pill sync-open" type="button" aria-label="Sync status. Open sync settings"><s></s><span class="syncT">Not connected</span></button>
-  </div>
-  <div class="n-card still">
-    <div class="n-h">Expense wheel</div>
-    <div class="n-wrow"><div class="n-donut" id="eDonut"></div><div class="n-lg" id="eLeg"></div></div>
+  <div class="top"><h1 class="vt">Expenses</h1><button class="pill sync-open" type="button" aria-label="Sync status. Open sync settings"><s></s><span class="syncT">Not connected</span></button></div>
+  <div class="n-card still n-sum">
+    <div class="lbl" style="margin:0">Total monthly expenses</div>
+    <div class="n-big"><i>$</i><b id="eTotal">0.00</b></div>
+    <div class="n-wrow" id="eWrow"><div class="n-donut" id="eDonut"></div><div class="n-lg" id="eLeg"></div></div>
+    <div class="n-sg" id="eSg" hidden><i style="flex:1;background:var(--p2)"></i></div>
   </div>
   <button class="n-mrow" type="button" id="eMaaBtn"><span><i></i>Maaser</span><span class="xa" id="eMaa">$0.00</span></button>
-  <div id="eList"></div>
-  <div id="eEmpty" class="empty" hidden>No expenses yet. Tap + to add one.</div>
+  <div class="lcard"><div id="eList"></div>
+    <div id="eEmpty" class="emp" hidden><div class="ei"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1z"/><path d="M9 9h6M9 13h4"/></svg></div><b>No expenses yet</b><span>Tap + to add your first expense.</span></div>
+  </div>
 </div>
 
 <!-- ===================== CARDS ===================== -->
 <div id="vCards" class="view" hidden>
-  <div class="top">
-    <div><div class="lbl">Total credit limit</div><div class="tot"><i>$</i><b id="cTotal">0</b></div></div>
-    <button class="pill sync-open" type="button" aria-label="Sync status. Open sync settings"><s></s><span class="syncT">Not connected</span></button>
+  <div class="top"><h1 class="vt">Cards</h1><button class="pill sync-open" type="button" aria-label="Sync status. Open sync settings"><s></s><span class="syncT">Not connected</span></button></div>
+  <div class="n-card still n-sum">
+    <div class="lbl" style="margin:0">Total credit limit</div>
+    <div class="n-big"><i>$</i><b id="cTotal">0</b></div>
+    <div class="n-sg" id="cBar"></div>
   </div>
   <div id="cSum"></div>
   <div id="cCount"></div>
@@ -414,14 +536,13 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 
 <!-- ===================== PAYMENTS ===================== -->
 <div id="vPay" class="view" hidden>
-  <div class="top">
-    <div><div class="lbl" id="ptl">Paid this month</div><div class="tot"><i>$</i><b id="ptotal">0.00</b></div><div class="bsub" style="margin-top:6px"><span id="pof"></span></div></div>
-    <button class="pill sync-open" type="button" aria-label="Sync status. Open sync settings"><s></s><span class="syncT">Not connected</span></button>
+  <div class="top"><h1 class="vt">Payments</h1><button class="pill sync-open" type="button" aria-label="Sync status. Open sync settings"><s></s><span class="syncT">Not connected</span></button></div>
+  <div class="n-card still n-sum">
+    <div class="n-sumtop"><div><div class="lbl" id="ptl" style="margin:0">Paid this month</div><div class="n-big"><i>$</i><b id="ptotal">0.00</b></div><div class="bsub"><span id="pof"></span></div></div><button class="ib" id="pcal" aria-label="Pick a month"></button></div>
+    <div class="cw" id="pchart"></div>
   </div>
   <div class="hh"><span class="sec">By card</span><button class="lk" id="pback" hidden></button></div>
-  <div id="plist"></div>
-  <div class="hh"><span class="sec">History</span><span class="hr"><span class="bsub">Previous months</span><button class="ib" id="pcal" aria-label="Pick a month"></button></span></div>
-  <div class="cw" id="pchart"></div>
+  <div class="lcard"><div id="plist"></div></div>
 </div>
 
 <!-- floating add button (hidden on Home) -->
@@ -1123,12 +1244,13 @@ function renderExpenses(skipList) {
   $('#eMaa').textContent = mf(S.maaser.amount);
 
   const label = act.length ? 'Expense wheel. ' + act.slice(0, 3).map(e => e.desc + ' ' + Math.round(e.amount / total * 100) + ' percent').join(', ') : 'Expense wheel. No expenses yet.';
-  $('#eDonut').innerHTML = `<svg viewBox="0 0 160 160" width="128" height="128" role="img" aria-label="${esc(label)}">${act.length ? donutHtml(act, total) : '<circle cx="80" cy="80" r="60" fill="none" stroke="#172a32" stroke-width="22"/>'}</svg>
+  $('#eDonut').innerHTML = `<svg viewBox="0 0 160 160" width="112" height="112" role="img" aria-label="${esc(label)}">${act.length ? donutHtml(act, total) : '<circle cx="80" cy="80" r="60" fill="none" stroke="#172a32" stroke-width="22"/>'}</svg>
     <div class="n-dc"><b>${act.length}</b><small>active</small></div>`;
   $('#eLeg').innerHTML = act.length
     ? act.map((e, i) => `<div><i style="background:${EXP_COLORS[i % EXP_COLORS.length]}"></i><span>${esc(e.desc)}</span><em>${Math.round(e.amount / total * 100)}%</em></div>`).join('')
     : '<div><span style="color:var(--mut)">Awaiting expenses</span></div>';
 
+  $('#eWrow').hidden = !act.length; $('#eSg').hidden = !!act.length;
   if (skipList) return;
   renderExpenseList();
 }
@@ -1179,13 +1301,13 @@ const Subs = {
 function openExpenseForm(e) {
   Sheet.open(`<h2>${e ? 'Edit expense' : 'Add expense'}</h2>
   <label for="xd">Description</label><input id="xd" type="text" required placeholder="e.g., Car insurance" value="${esc(e ? e.desc : '')}">
-  <label for="xa">Amount ($)</label><input id="xa" type="number" step="0.01" min="0.01" inputmode="decimal" placeholder="0.00" value="${e ? e.amount : ''}" style="font-family:ui-monospace,Menlo,monospace">
+  <label for="xa">Amount</label><div class="fa"><span>$</span><input id="xa" type="number" step="0.01" min="0.01" inputmode="decimal" placeholder="0.00" value="${e ? e.amount : ''}"></div>
   <label for="xn">${e ? 'Note details' : 'Internal note'}</label>${e
     ? `<textarea id="xn" rows="3" placeholder="No note added yet...">${esc(e.note || '')}</textarea>`
     : '<input id="xn" type="text" placeholder="Optional context...">'}
   <button class="btn" id="xsv" type="button">${e ? 'Save' : 'Add expense'}</button>
   ${e ? `<div class="cfb" style="margin-top:8px"><button class="btn d2" id="xdl" type="button">Delete</button><button class="btn s" id="xar" type="button">${e.isArchived ? 'Resume expense' : 'Pause expense'}</button></div>` : ''}
-  <button class="btn s" id="xcn" type="button" style="margin-top:8px">Cancel</button>`, () => {
+  <button class="btn s cx" id="xcn" type="button">Cancel</button>`, () => {
     $('#xcn').onclick = closeSheet;
     $('#xsv').onclick = () => {
       const desc = $('#xd').value.trim(), amt = parseFloat($('#xa').value), note = $('#xn').value.trim();
@@ -1229,7 +1351,7 @@ function openMaaser() {
   <div class="mrow2"><input id="ma" type="number" step="0.01" min="0" inputmode="decimal" placeholder="0.00"><button class="n-pm m" id="mm" type="button" aria-label="Subtract">${svg(IC.minus, 20)}</button><button class="n-pm p" id="mp" type="button" aria-label="Add">${svg(IC.plus, 20)}</button></div>
   <form id="mf" style="margin-top:14px;padding-top:14px;border-top:.5px solid var(--line)">
     <label for="mx">Set exact amount ($)</label>
-    <input id="mx" type="number" step="0.01" min="0" inputmode="decimal" required value="${S.maaser.amount}" style="font-family:ui-monospace,Menlo,monospace">
+    <input id="mx" type="number" step="0.01" min="0" inputmode="decimal" required value="${S.maaser.amount}">
     <button class="btn" type="submit">Save amount</button>
   </form>
   <div class="mhead"><h4>Change history</h4>${hist.length ? '<button id="mclr" type="button">Clear</button>' : ''}</div>
@@ -1315,7 +1437,10 @@ function cardSummary() {
 
 function renderCards() {
   cardSummary();
-  $('#cTotal').textContent = S.cards.reduce((s, c) => s + (+c.limit || 0), 0).toLocaleString('en-US');
+  const limTot = S.cards.reduce((s, c) => s + (+c.limit || 0), 0);
+  $('#cTotal').textContent = limTot.toLocaleString('en-US');
+  const lr = S.cards.filter(c => +c.limit > 0);
+  $('#cBar').innerHTML = lr.map(c => `<i style="flex:${+c.limit};background:${esc(cCol(c.id))}"></i>`).join('');
   $('#cCount').textContent = S.cards.length === 1 ? '1 card' : S.cards.length + ' cards';
   const st = $('#cStack'); st.innerHTML = '';
   if (!S.cards.length) { st.innerHTML = '<div class="empty">Tap + to add your first card.</div>'; return; }
@@ -1402,16 +1527,17 @@ function reveal(c, el) {
 }
 function openDetail(id) {
   const c = S.cards.find(x => x.id === id); if (!c) return;
-  const row = (i, col, lab, val, a, b, L) => `<div class="row"><div class="ic" style="color:${col}">${svg(IC[i])}</div><div class="rm"><div class="lab">${lab}</div><div class="val${L ? ' L' : ''}">${val}</div></div>${a ? `<div class="rr"><div>${a}</div><div class="s">${b}</div></div>` : ''}</div>`;
+  /* left: name and a small line under it; right: value and a small line under it */
+  const row = (i, col, lab, val, a, b) => `<div class="row"><div class="ic" style="color:${col}">${svg(IC[i])}</div><div class="rm"><div class="val">${lab}</div>${b ? `<div class="lab">${b}</div>` : ''}</div><div class="rr"><div class="v">${val}</div>${a ? `<div class="s">${a}</div>` : ''}</div></div>`;
   const s = +c.stmtDay, d = +c.dueDay;
-  $('#dbody').innerHTML = `<div class="nav"><button class="lk" id="bk">${svg(IC.back)}Cards</button><div class="ttl">${esc(c.name)}</div><button class="lk m" id="ed">${svg(IC.edit)}Edit</button></div>` +
+  $('#dbody').innerHTML = `<div class="nav"><button class="lk" id="bk">${svg(IC.back)}Cards</button><button class="pillb" id="ed">Edit</button></div><h1 class="vt vt2">${esc(lbl(c))}</h1>` +
     `<div id="big"></div><div id="cap"></div><div class="panel">` +
     (isDebit(c) ? '' :
-      row('limit', '#00c805', 'Credit limit', '$' + (+c.limit || 0).toLocaleString('en-US'), '', '', 1) +
+      row('limit', '#00c805', 'Credit limit', '$' + (+c.limit || 0).toLocaleString('en-US'), '', '') +
       row('stmt', '#0094ff', 'Statement prints', s ? ord(s) + ' of each month' : 'Not set', s ? short(nxt(s)) : '', s ? inDays(nxt(s)) : '') +
       row('due', '#ffb700', 'Payment due', d ? ord(d) + ' of each month' : 'Not set', d ? short(nxt(d)) : '', d ? inDays(nxt(d)) : '')) +
-    row('open', '#9d4edd', 'Date opened', c.opened ? pd(c.opened).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set', c.opened ? age(c.opened) : '', c.opened ? 'card age' : '') +
-    `<button class="row rowb" id="ccb" type="button"><div class="ic" style="color:${esc(cCol(c.id))}">${svg(IC.bars)}</div><div class="rm"><div class="lab">Chart color</div><div class="val">${c.chartColor ? esc(c.chartColor.toUpperCase()) : 'Automatic'}</div></div><span class="cc-sw" style="background:${esc(cCol(c.id))}"></span></button></div>`;
+    row('open', '#9d4edd', 'Date opened', c.opened ? pd(c.opened).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set', '', c.opened ? (age(c.opened) === 'New' ? 'New card' : 'Card age ' + age(c.opened)) : '') +
+    `<button class="row rowb" id="ccb" type="button"><div class="ic" style="color:${esc(cCol(c.id))}">${svg(IC.bars)}</div><div class="rm"><div class="val">Chart color</div>${c.chartColor ? '' : '<div class="lab">Automatic</div>'}</div><span class="cc-sw" style="background:${esc(cCol(c.id))}" aria-label="Chart color ${esc(cCol(c.id))}"></span></button></div>`;
   const el = cardEl(c, true); $('#big').replaceWith(el);
   if (c.num || c.exp || c.cvv) { const b = document.createElement('button'); b.className = 'eye'; b.setAttribute('aria-label', 'Show card details'); b.innerHTML = svg(IC.eye); b.onclick = () => askPin(() => reveal(c, el)); el.appendChild(b); }
   $('#bk').onclick = () => { hideNow(); $('#detail').classList.remove('on'); };
@@ -1428,7 +1554,7 @@ function openCardForm(c) {
   Sheet.open(`<h2>${c ? 'Edit card' : 'Add card'}</h2>
   <div class="zseg" id="ty"><button type="button" id="tyc">Credit</button><button type="button" id="tyd">Debit</button></div>
   <label for="fn">Card name</label><input id="fn" value="${esc(e.name)}" placeholder="Everyday Visa">
-  <div id="crd"><label for="fl">Credit limit ($)</label><input id="fl" type="number" inputmode="decimal" value="${esc(e.limit)}" placeholder="15000">
+  <div id="crd"><label for="fl">Credit limit</label><div class="fa"><span>$</span><input id="fl" type="number" inputmode="decimal" value="${esc(e.limit)}" placeholder="15000"></div>
   <div class="two"><div><label for="fs">Statement prints (day 1-31)</label><input id="fs" type="number" inputmode="numeric" min="1" max="31" value="${esc(e.stmtDay)}"></div>
   <div><label for="fd">Payment due (day 1-31)</label><input id="fd" type="number" inputmode="numeric" min="1" max="31" value="${esc(e.dueDay)}"></div></div></div>
   <div class="two"><div><label for="fo">Date opened</label><input id="fo" type="date" value="${esc(e.opened)}"></div>
@@ -1438,7 +1564,7 @@ function openCardForm(c) {
   <div><label for="fv">CVV</label><input id="fv" inputmode="numeric" autocomplete="off" maxlength="4" placeholder="${has ? 'Hidden' : ''}"></div></div>
   ${has ? '<button class="btn s" id="fc" type="button">Remove saved number, expiration and CVV</button><div style="height:12px"></div>' : ''}
   <div class="lb">Card photo</div><div id="pf"></div><input id="fp" type="file" accept="image/*" hidden>
-  <button class="btn" id="sv" type="button">Save card</button><button class="btn s" id="cn" type="button">Cancel</button>${c ? '<button class="btn d" id="dl" type="button">Delete card</button>' : ''}`, b => {
+  <button class="btn" id="sv" type="button">Save card</button><button class="btn s cx" id="cn" type="button">Cancel</button>${c ? '<button class="btn d" id="dl" type="button">Delete card</button>' : ''}`, b => {
     const drawP = () => {
       const p = $('#pf');
       p.innerHTML = photo
@@ -1568,6 +1694,12 @@ function allKeys(list) {
   return out;
 }
 
+/* the chart shows only months that have payments, plus this month and the one picked */
+function chartKeys(list, sel) {
+  const set = new Set(list.map(p => p.date.slice(0, 7))); set.add(CKf()); if (sel) set.add(sel);
+  return Array.from(set).sort();
+}
+
 /* one month of bars, one segment per card, after Zelle in: each Zelle in comes off its own card first, then off the others */
 function netSegs(kk) {
   const L = live(), segs = S.cards.map(c => ({ id: c.id, c: cCol(c.id), v: sum(L.filter(p => p.card === c.id && inM(p, kk))) }));
@@ -1579,11 +1711,13 @@ function netSegs(kk) {
 
 /* sideways-scrolling bar chart; segF(monthKey) -> [{c:color,v:amount}] stacked bottom to top */
 function drawChart(host, keys, segF, sel) {
+  const hasData = keys.some(k => segF(k).some(x => x.v > 0));
+  host.hidden = !hasData; if (!hasData) { host.innerHTML = ''; return; }
   const old = host.querySelector('.sc'), left = old && old.scrollWidth > 0 ? old.scrollLeft : null;
   const vals = keys.map(segF), tots = vals.map(a => a.reduce((t, x) => t + x.v, 0)), mx = Math.max(1, ...tots);
   const cols = vals.map((segs, i) => {
     const on = segs.filter(x => x.v > 0);
-    return `<div class="col${keys[i] === sel ? ' sel' : ''}" data-k="${keys[i]}">${on.map((x, j) => `<div style="height:${Math.max(1.5, x.v / mx * 130)}px;background:${x.c}${j === on.length - 1 ? ';border-radius:3px 3px 0 0' : ''}"></div>`).join('')}</div>`;
+    return `<div class="col${keys[i] === sel ? ' sel' : ''}" data-k="${keys[i]}">${on.map((x, j) => `<div style="height:${Math.max(1.5, x.v / mx * 100)}px;background:${x.c}${j === on.length - 1 ? ';border-radius:3px 3px 0 0' : ''}"></div>`).join('')}</div>`;
   }).join('');
   const labs = keys.map((k, i) => { const [yr, mo] = pk(k); return `<span class="${k === sel ? 'on' : ''}">${mAbbr(mo - 1) + (mo === 1 || i === 0 ? ' ’' + String(yr).slice(2) : '')}</span>`; }).join('');
   host.innerHTML = `<div class="sc"><div class="cols">${cols}</div><div class="labs">${labs}</div></div>`;
@@ -1616,8 +1750,9 @@ function openMonthPicker(list, sel, onPick, net) {
 }
 
 function refreshPay() {
-  const L = live(), Z = zel(), keys = allKeys(L.concat(Z));
-  if (!keys.includes(selA)) selA = CKf();
+  const L = live(), Z = zel();
+  if (!allKeys(L.concat(Z)).includes(selA)) selA = CKf();
+  const keys = chartKeys(L.concat(Z), selA);
   const [sy, sm] = pk(selA), mp = L.filter(p => inM(p, selA)), nc = new Set(mp.map(p => p.card)).size, isNow = selA === CKf();
   $('#ptl').textContent = 'Paid in ' + new Date(sy, sm - 1, 1).toLocaleDateString('en-US', sy === CUR.y ? { month: 'long' } : { month: 'long', year: 'numeric' });
   const zm = Z.filter(p => inM(p, selA)), zs = sum(zm);
@@ -1629,7 +1764,7 @@ function refreshPay() {
   const byAmt = S.cards.map((c, i) => ({ c, i, v: sum(mp.filter(p => p.card === c.id)) })).sort((a, b) => b.v - a.v || a.i - b.i).map(x => x.c);
   $('#plist').innerHTML = S.cards.length ? byAmt.map(c => {
     const b = mp.filter(p => p.card === c.id).sort(byDate);
-    return `<div class="pr" data-id="${esc(c.id)}" role="button" tabindex="0"><i style="width:10px;height:10px;border-radius:3px;flex-shrink:0;background:${cCol(c.id)}"></i><div class="pm"><b>${esc(lbl(c))}</b><small>${b.length ? 'Last paid ' + dShort(b[0].date) : 'No payments'}${zr(c.id) ? ' \u00b7 <span class="zg">' + mf(zr(c.id)) + ' from Zelle</span>' : ''}</small></div><div class="pv"${b.length ? '' : ' style="color:var(--mut)"'}>${mf(sum(b))}</div></div>`;
+    return `<div class="pr" data-id="${esc(c.id)}" role="button" tabindex="0"><i class="pd" style="background:${cCol(c.id)}"></i><div class="pm"><b>${esc(lbl(c))}</b><small>${b.length ? 'Last paid ' + dShort(b[0].date) : 'No payments'}${zr(c.id) ? ' \u00b7 <span class="zg">' + mf(zr(c.id)) + ' from Zelle</span>' : ''}</small></div><div class="pv"${b.length ? '' : ' style="color:var(--mut)"'}>${mf(sum(b))}</div></div>`;
   }).join('') : '<div class="empty">Add a card first.</div>';
   drawChart($('#pchart'), keys, netSegs, selA);
   if (curPay && $('#pdetail').classList.contains('on')) openPayDetail(curPay);
@@ -1637,7 +1772,7 @@ function refreshPay() {
 
 const keysSel = id => selC[id] || CKf();
 function drawCardChart(id) {
-  const all = live().filter(p => p.card === id), zc = zel().filter(p => p.card === id), keys = allKeys(all.concat(zc)), sel = keys.includes(selC[id]) ? selC[id] : CKf();
+  const all = live().filter(p => p.card === id), zc = zel().filter(p => p.card === id), sel = allKeys(all.concat(zc)).includes(selC[id]) ? selC[id] : CKf(), keys = chartKeys(all.concat(zc), sel);
   drawChart($('#pchart2'), keys, kk => [{ c: cCol(id), v: Math.max(0, sum(all.filter(p => inM(p, kk))) - sum(zc.filter(p => inM(p, kk)))) }], sel);
   const zs = sum(zc.filter(p => inM(p, sel))); $('#cm5').hidden = !(zs > 0); $('#cm5').textContent = '\u2212' + mf(zs) + ' from Zelle in';
   const a = all.filter(p => inM(p, sel)).sort(byDate), [y, m] = pk(sel);
@@ -1651,12 +1786,12 @@ function openPayDetail(id) {
   curPay = id;
   const all = live().filter(p => p.card === id).concat(zel().filter(p => p.card === id)).sort(byDate);
   const thumb = c.photo ? `<img class="thb" src="${c.photo}" alt="">` : `<div class="thb gen-bg" style="aspect-ratio:1.586"></div>`;
-  $('#pdbody').innerHTML = `<div class="nav"><button class="lk" id="pdb">${svg(IC.back)}Payments</button><div class="ttl">${esc(lbl(c))}</div><div style="width:76px"></div></div>
-  <div class="ptop">${thumb}<div><div class="pm1" id="cm1"></div><div class="pm2" id="cm2"></div><div class="pm3" id="cm3"></div><div class="pm3 zg" id="cm5" style="font-weight:600" hidden></div><div class="pm4" id="cm4"></div></div></div>
-  <div class="hh"><span class="sec">History</span><button class="ib" id="pcal2" aria-label="Pick a month">${svg(IC.cal, 16)}</button></div>
-  <div class="cw" id="pchart2"></div>
+  const dtile = d => { const x = pd(d); return `<div class="dt"><b>${x.getDate()}</b><s>${mAbbr(x.getMonth())}</s></div>`; };
+  $('#pdbody').innerHTML = `<div class="nav"><button class="lk" id="pdb">${svg(IC.back)}Payments</button></div><h1 class="vt vt2">${esc(lbl(c))}</h1>
+  <div class="n-card still n-sum"><div class="n-sumtop" style="align-items:center">${thumb}<div class="pdm"><div class="pm1" id="cm1"></div><div class="pm2" id="cm2"></div><div class="pm3" id="cm3"></div><div class="pm3 zg" id="cm5" style="font-weight:600" hidden></div><div class="pm4" id="cm4"></div></div><button class="ib" id="pcal2" aria-label="Pick a month" style="align-self:flex-start">${svg(IC.cal, 16)}</button></div>
+  <div class="cw" id="pchart2"></div></div>
   <div class="sec" style="margin-top:6px">Payments</div>
-  <div>${all.length ? all.slice(0, 60).map(p => `<div class="mr" data-id="${esc(p.id)}" role="button" tabindex="0"><div class="pl"><b${p.z ? ' class="zg"' : ''}>${p.z ? '+' : ''}${mf(p.amt)}</b><small>${p.z ? 'Zelle in \u00b7 ' : ''}${dFull(p.date)}</small></div>${svg(IC.right, 16)}</div>`).join('') : '<div class="empty" style="padding:16px 0">No payments yet. Tap + to add one.</div>'}</div>`;
+  <div class="lcard">${all.length ? all.slice(0, 60).map(p => `<div class="mr" data-id="${esc(p.id)}" role="button" tabindex="0">${dtile(p.date)}<div class="pl"><b${p.z ? ' class="zg"' : ''}>${p.z ? '+' : ''}${mf(p.amt)}</b><small>${p.z ? 'Zelle in \u00b7 ' : ''}${dFull(p.date)}</small></div>${svg(IC.right, 16)}</div>`).join('') : '<div class="empty" style="padding:16px 0">No payments yet. Tap + to add one.</div>'}</div>`;
   $('#pdb').onclick = closePayDetail;
   $('#pcal2').onclick = () => openMonthPicker(all.filter(p => !p.z), keysSel(id), k => { selC[id] = k; drawCardChart(id); centerSel($('#pchart2')); });
   $('#pdbody').querySelectorAll('.mr').forEach(r => r.onclick = () => openPayForm(S.payments.find(p => p.id === r.dataset.id)));
@@ -1670,18 +1805,20 @@ function openPayForm(p, presel) {
   const e = p || { card: presel || curPay || S.cards[0].id, amt: '', date: tstr() };
   let zm = !!(p && p.z);
   Sheet.open(`<h2>${p ? (zm ? 'Edit Zelle in' : 'Edit payment') : 'Add payment'}</h2>
-  <label for="pc">Card</label><select id="pc">${S.cards.map(c => `<option value="${esc(c.id)}"${c.id === e.card ? ' selected' : ''}>${esc(lbl(c))}</option>`).join('')}</select>
+  <label for="pc">Card</label><div class="fs"><i id="pcd"></i><select id="pc">${S.cards.map(c => `<option value="${esc(c.id)}"${c.id === e.card ? ' selected' : ''}>${esc(lbl(c))}</option>`).join('')}</select></div>
   <div class="zseg" id="zt" hidden><button type="button" id="ztp">Payment</button><button type="button" id="ztz">Zelle in</button></div>
-  <label for="pa" id="pal">Amount paid ($)</label><input id="pa" type="number" inputmode="decimal" step="0.01" value="${e.amt}" placeholder="0.00">
+  <label for="pa" id="pal">Amount paid</label><div class="fa"><span>$</span><input id="pa" type="number" inputmode="decimal" step="0.01" value="${e.amt}" placeholder="0.00"></div>
   <div class="zsub" id="zhint" hidden>Money received. It is subtracted from this month's total paid.</div>
   <label for="pdt" id="pdl2">Date paid</label><div class="drow" id="dr"><span>${e.date === tstr() ? 'Today, ' + dShort(e.date) : dFull(e.date)}</span><button type="button" class="lk" id="dc">Change</button></div><input id="pdt" type="date" value="${e.date}" max="${tstr()}" style="display:none">
-  <button class="btn" id="psv" type="button">Save payment</button><button class="btn s" id="pcn" type="button">Cancel</button>${p ? '<button class="btn d" id="pdl" type="button">Delete ' + (zm ? 'Zelle in' : 'payment') + '</button>' : ''}`, () => {
+  <button class="btn" id="psv" type="button">Save payment</button><button class="btn s cx" id="pcn" type="button">Cancel</button>${p ? '<button class="btn d" id="pdl" type="button">Delete ' + (zm ? 'Zelle in' : 'payment') + '</button>' : ''}`, () => {
     const paint = () => {
       const deb = isDebit(S.cards.find(c => c.id === $('#pc').value));
       if (!deb && !(p && p.z)) zm = false;
       $('#zt').hidden = !(deb && !p);
       $('#ztp').classList.toggle('on', !zm); $('#ztz').classList.toggle('on', zm); $('#ztz').classList.toggle('zg2', zm);
-      $('#pal').textContent = zm ? 'Amount received ($)' : 'Amount paid ($)';
+      $('#pal').textContent = zm ? 'Amount received' : 'Amount paid';
+      $('#psv').classList.toggle('z', zm);
+      const cc = S.cards.find(c => c.id === $('#pc').value); $('#pcd').style.background = cc ? cCol(cc.id) : 'transparent';
       $('#pdl2').textContent = zm ? 'Date received' : 'Date paid';
       $('#psv').textContent = zm ? 'Save Zelle in' : 'Save payment';
       $('#zhint').hidden = !zm;
