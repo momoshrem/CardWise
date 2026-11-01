@@ -47,6 +47,8 @@ input,textarea{user-select:text;-webkit-user-select:text}
 .n-ends{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:var(--mut)}
 .n-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}.n-chip{display:flex;align-items:center;gap:6px;background:var(--p2);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;color:#d1d5db;max-width:100%}.n-chip i{width:10px;height:7px;border-radius:2px;display:inline-block;flex-shrink:0}.n-chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .n-next.urgent{border-color:rgba(255,183,0,.45)}
+.n-next.st .n-date{color:var(--blue)}.n-next.st .n-prog i{background:var(--blue)}.n-next.st.urgent{border-color:rgba(0,148,255,.45)}
+.n-fitrow{display:flex;gap:8px;width:100%;flex-wrap:wrap}.n-fitrow .n-chip{flex:0 0 auto;padding:6px 9px;gap:5px}.n-tag{font-style:normal;font-weight:700;letter-spacing:.05em;font-size:.8em;flex-shrink:0}.n-tag.p{color:var(--amb)}.n-tag.s{color:var(--blue)}
 .n-none{font-size:14px;color:var(--sub);line-height:1.5;margin-top:8px}
 .n-maaT{display:flex;align-items:center;gap:6px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:500}.n-maaT i{width:6px;height:6px;border-radius:50%;background:var(--g)}
 .n-pm{width:44px;height:44px;flex-shrink:0;border-radius:12px;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}.n-pm.m{background:#2a1215;border:1px solid #7f1d1d;color:#fecaca}.n-pm.p{background:#0f2a1d;border:1px solid #166534;color:#86efac}.n-pm:active{transform:scale(.95)}
@@ -219,6 +221,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 #hList .wide{grid-column:1/-1}
 #hList .n-tile{display:block;width:100%;min-height:62px}
 #hList .n-tile b.amb{color:var(--amb)}
+#hList .n-tile b.blu{color:var(--blue)}
 .chev{color:var(--mut);display:flex}
 .n-maa{border-color:rgba(20,83,45,.6)}
 .n-maaT{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:500}.n-maaT i{width:6px;height:6px;border-radius:50%;background:var(--g)}
@@ -810,34 +813,58 @@ function openSetup(first) {
    ===================================================================== */
 const weekdayDate = d => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-/* The nearest payment due date, the cards due on it, and where we are since the last statement */
+/* The soonest event: a payment due or a statement closing. If both fall on the same day the payment leads and the
+   statement rides along (shown side by side). Also finds the event after it, for the "Then" line. */
 function nextUpInfo() {
-  const withDue = S.cards.filter(c => +c.dueDay > 0);
-  if (!withDue.length) return null;
-  const items = withDue.map(c => ({ c, d: nxt(+c.dueDay) }));
-  const min = Math.min(...items.map(i => +i.d));
-  const group = items.filter(i => +i.d === min).map(i => i.c);
-  const due = new Date(min);
-  const days = daysUntil(due);
-  let stmt = null, prevDue = null;
-  group.forEach(c => {
-    if (+c.stmtDay > 0) { const s = prevDate(+c.stmtDay, false); if (s && (!stmt || s > stmt)) stmt = s; }
-    const p = prevDate(+c.dueDay, true); if (p && (!prevDue || p > prevDue)) prevDue = p;
+  const ev = [];
+  S.cards.forEach(c => {
+    if (+c.dueDay > 0) ev.push({ k: 'p', d: nxt(+c.dueDay), c });
+    if (+c.stmtDay > 0) ev.push({ k: 's', d: nxt(+c.stmtDay), c });
   });
-  let frac = null;
-  /* only draw the bar when a statement has closed since the last due date */
-  if (stmt && due > stmt && (!prevDue || stmt >= prevDue)) {
-    frac = Math.max(0, Math.min(1, (today() - stmt) / (due - stmt)));
+  if (!ev.length) return null;
+  ev.sort((a, b) => (+a.d - +b.d) || (a.k === b.k ? 0 : a.k === 'p' ? -1 : 1));
+  const first = ev[0], date = first.d, days = daysUntil(date), kind = first.k;
+  const group = ev.filter(e => e.k === kind && +e.d === +date).map(e => e.c);
+  const other = ev.filter(e => e.k !== kind && +e.d === +date).map(e => e.c);
+  let stmt = null, frac = null;
+  if (kind === 'p') {
+    let prevDue = null;
+    group.forEach(c => {
+      if (+c.stmtDay > 0) { const s = prevDate(+c.stmtDay, false); if (s && (!stmt || s > stmt)) stmt = s; }
+      const p = prevDate(+c.dueDay, true); if (p && (!prevDue || p > prevDue)) prevDue = p;
+    });
+    /* only draw the bar when a statement has closed since the last due date */
+    if (stmt && date > stmt && (!prevDue || stmt >= prevDue)) frac = Math.max(0, Math.min(1, (today() - stmt) / (date - stmt)));
+    else stmt = null;
+  } else {
+    /* bar runs from the previous statement close to this one */
+    group.forEach(c => { const s = prevDate(+c.stmtDay, true); if (s && (!stmt || s > stmt)) stmt = s; });
+    if (stmt && date > stmt) frac = Math.max(0, Math.min(1, (today() - stmt) / (date - stmt)));
+    else stmt = null;
   }
-  /* cards that fall due on the next different date after this one */
-  const later = items.filter(i => +i.d > min);
+  /* the next day with something happening after this one */
+  const rest = ev.filter(e => +e.d > +date);
   let then = null;
-  if (later.length) {
-    const m2 = Math.min(...later.map(i => +i.d));
-    then = { d: new Date(m2), cards: later.filter(i => +i.d === m2).map(i => i.c) };
+  if (rest.length) {
+    const m2 = +rest[0].d, at = rest.filter(e => +e.d === m2);
+    then = { d: new Date(m2), p: at.filter(e => e.k === 'p').map(e => e.c), s: at.filter(e => e.k === 's').map(e => e.c) };
   }
-  return { group, due, days, stmt: frac == null ? null : stmt, frac, then };
+  return { kind, group, other, date, days, stmt, frac, then };
 }
+
+/* shrink the chips on a same-day row until they sit side by side; wrap only if even the smallest size won't fit */
+function fitNextChips() {
+  document.querySelectorAll('#hNext .n-fitrow').forEach(r => {
+    const W = r.clientWidth; if (!W) return;
+    const kids = [...r.children];
+    const used = () => kids.reduce((a, c) => a + c.getBoundingClientRect().width, 0) + 8 * (kids.length - 1);
+    r.style.flexWrap = 'nowrap';
+    let f = 12;
+    for (; f >= 8.5; f -= 0.25) { kids.forEach(c => { c.style.fontSize = f + 'px'; }); if (used() <= W) return; }
+    r.style.flexWrap = 'wrap';
+  });
+}
+window.addEventListener('resize', fitNextChips);
 
 function renderNextUp() {
   const host = $('#hNext');
@@ -845,23 +872,46 @@ function renderNextUp() {
   if (!info) {
     host.innerHTML = `<button class="n-card n-next" type="button" data-go="cards">
       <div class="n-row"><span class="lbl" style="margin:0">Next up</span></div>
-      <div class="n-none">${S.cards.length ? 'Add a payment due day to a card to see a countdown here.' : 'Add a card to see when your next payment is due.'}</div></button>`;
+      <div class="n-none">${S.cards.length ? 'Add a payment due day or statement day to a card to see a countdown here.' : 'Add a card to see when your next payment is due.'}</div></button>`;
     return;
   }
-  const { group, due, days, stmt, frac, then } = info;
-  const many = group.length > 1;
+  const { kind, group, other, date, days, stmt, frac, then } = info;
+  const many = group.length > 1, st = kind === 's', both = other.length > 0;
   const count = days === 0 ? '<b>Today</b>' : `<b>${days}</b><span>${days === 1 ? 'day' : 'days'}</span>`;
-  const sub = days === 0 ? (many ? 'Payments are due today' : 'Payment is due today') : (many ? 'until payments are due' : 'until payment is due');
+  let sub;
+  if (both) {
+    const pm = many, sm = other.length > 1;
+    sub = days === 0 ? `${pm ? 'Payments due' : 'Payment due'} \u00b7 ${sm ? 'statements close' : 'statement closes'} today`
+      : `until ${pm ? 'payments are due' : 'payment is due'} \u00b7 ${sm ? 'statements close' : 'statement closes'}`;
+  } else if (st) {
+    sub = days === 0 ? (many ? 'Statements close today' : 'Statement closes today') : (many ? 'until statements close' : 'until statement closes');
+  } else {
+    sub = days === 0 ? (many ? 'Payments are due today' : 'Payment is due today') : (many ? 'until payments are due' : 'until payment is due');
+  }
   const bar = frac == null ? '' : `<div class="n-prog" aria-hidden="true"><i style="width:${(frac * 100).toFixed(1)}%"></i></div>
-      <div class="n-ends"><span>${many ? 'Statements' : 'Statement'} closed ${esc(short(stmt))}</span><span>Due ${esc(short(due))}</span></div>`;
-  const chips = group.map(c => `<span class="n-chip"><i style="background:${esc(cCol(c.id))}"></i><span>${esc(lbl(c))}</span></span>`).join('');
-  host.innerHTML = `<button class="n-card n-next${days <= 3 ? ' urgent' : ''}" type="button" data-go="cards" aria-label="Next payment due ${esc(weekdayDate(due))}. Open Cards">
-    <div class="n-row"><span class="lbl" style="margin:0">Next up</span><span class="n-date">${esc(weekdayDate(due))}</span></div>
+      <div class="n-ends">${st ? `<span>Last closed ${esc(short(stmt))}</span><span>Closes ${esc(short(date))}</span>`
+        : `<span>${many ? 'Statements' : 'Statement'} closed ${esc(short(stmt))}</span><span>Due ${esc(short(date))}</span>`}</div>`;
+  const chip = (c, tag) => `<span class="n-chip"><i style="background:${esc(cCol(c.id))}"></i><span>${esc(lbl(c))}</span>${tag ? `<em class="n-tag ${tag === 'DUE' ? 'p' : 's'}">${tag}</em>` : ''}</span>`;
+  const chips = both
+    ? `<div class="n-fitrow">${group.map(c => chip(c, 'DUE')).join('')}${other.map(c => chip(c, 'STATEMENT')).join('')}</div>`
+    : group.map(c => chip(c)).join('');
+  const names = a => a.map(c => esc(lbl(c))).join(', ');
+  let thenTxt = '';
+  if (then) {
+    const parts = [];
+    if (then.p.length) parts.push(`${then.p.length > 1 ? 'payments due' : 'payment due'} \u00b7 ${names(then.p)}`);
+    if (then.s.length) parts.push(`${then.s.length > 1 ? 'statements close' : 'statement closes'} \u00b7 ${names(then.s)}`);
+    thenTxt = `<div class="n-then">Then ${esc(short(then.d))}: ${parts.join('; ')}</div>`;
+  }
+  const what = both ? 'payment due and statement closes' : st ? 'statement closes' : 'payment due';
+  host.innerHTML = `<button class="n-card n-next${st ? ' st' : ''}${days <= 3 ? ' urgent' : ''}" type="button" data-go="cards" aria-label="Next ${what} ${esc(weekdayDate(date))}. Open Cards">
+    <div class="n-row"><span class="lbl" style="margin:0">Next up</span><span class="n-date">${esc(weekdayDate(date))}</span></div>
     <div class="n-count">${count}</div>
     <div class="n-sub">${sub}</div>
     ${bar}
     <div class="n-chips">${chips}</div>
-    ${then ? `<div class="n-then">Then ${esc(short(then.d))}: ${then.cards.map(c => esc(lbl(c))).join(', ')}</div>` : ''}</button>`;
+    ${thenTxt}</button>`;
+  fitNextChips();
 }
 
 function renderHome() {
@@ -898,9 +948,9 @@ function renderHome() {
   $('#sExp').textContent = mf(tot);
   $('#sMaa').textContent = mf(S.maaser.amount);
   const ni = nextUpInfo();
-  $('#sNextL').textContent = ni ? 'Next up \u00b7 ' + weekdayDate(ni.due) : 'Next up';
+  $('#sNextL').textContent = ni ? 'Next up \u00b7 ' + weekdayDate(ni.date) : 'Next up';
   $('#sNext').textContent = ni ? (ni.days === 0 ? 'Today' : plural(ni.days, 'day')) : '\u2014';
-  $('#sNext').className = ni ? 'amb' : '';
+  $('#sNext').className = ni ? (ni.kind === 's' && !ni.other.length ? 'blu' : 'amb') : '';
 
   /* large Paid card: split by card */
   $('#hPaidLB').textContent = pi ? pi.label : 'Paid so far';
