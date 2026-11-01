@@ -1519,6 +1519,7 @@ function hideNow() { clearTimeout(rtm); const r = $('#detail .rv'); if (r) r.rem
 document.addEventListener('visibilitychange', () => { if (document.hidden) hideNow(); });
 
 function askPin(ok) {
+  if (!hasPin()) { ok(); return; }
   let v = ''; const b = $('#pbody');
   const draw = m => {
     b.innerHTML = `<h2 style="text-align:center">Enter passcode</h2><p style="text-align:center">${m || 'To view full number, expiration and CVV'}</p><div class="dots">${[0, 1, 2, 3].map(i => `<span class="${i < v.length ? 'f' : ''}"></span>`).join('')}</div><div class="pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 'x', 0, '<'].map(k => k === 'x' ? '<button class="gh" data-k="x">Cancel</button>' : k === '<' ? '<button class="gh" data-k="<">Delete</button>' : `<button data-k="${k}">${k}</button>`).join('')}</div>`;
@@ -1701,22 +1702,24 @@ function hashPin(p) {
   h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
   return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(36);
 }
-/* until a PIN is chosen, the original one still works */
-const pinOk = v => (S.security && S.security.pin) ? hashPin(v) === S.security.pin : v === '1203';
+/* No PIN unless one is set in Settings. Nothing is hardcoded. */
+const hasPin = () => !!(S.security && S.security.pin);
+const pinOk = v => !hasPin() || hashPin(v) === S.security.pin;
 
-function renderPinPage(host) {
-  host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Settings</button></div><h1 class="vt vt2">Change PIN</h1><div class="pinw" id="pinw"></div>`;
+function renderPinPage(host, mode) {
+  const had = hasPin(), rm = mode === 'remove';
+  host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Settings</button></div><h1 class="vt vt2">${rm ? 'Remove PIN' : had ? 'Change PIN' : 'Set PIN'}</h1><div class="pinw" id="pinw"></div>`;
   const w = $('#pinw');
   const STEPS = { cur: ['Enter current PIN', 'To make sure it is you'], nw: ['Enter new PIN', 'Choose 4 digits'], cf: ['Confirm new PIN', 'Enter it once more'] };
-  let step = 'cur', v = '', first = '';
+  let step = had ? 'cur' : 'nw', v = '', first = '';
   const draw = (msg, bad) => {
     const t = STEPS[step];
     w.innerHTML = `<h2>${t[0]}</h2><p class="pmsg${bad ? ' bad' : ''}">${esc(msg || t[1])}</p><div class="dots">${[0, 1, 2, 3].map(i => `<span class="${i < v.length ? 'f' : ''}"></span>`).join('')}</div><div class="pad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, '', 0, '<'].map(k => k === '' ? '<span></span>' : k === '<' ? '<button class="gh" data-k="<">Delete</button>' : `<button data-k="${k}">${k}</button>`).join('')}</div>`;
   };
   const done = () => {
-    S.security = { pin: hashPin(first), updatedAt: nowTs() };
+    S.security = { pin: rm ? '' : hashPin(first), updatedAt: nowTs() };
     commit('expenses');
-    w.innerHTML = `<div class="okc">${svg(IC.check, 30)}</div><h2>PIN changed</h2><p class="pmsg">${Sync.connected() ? 'It will update on your other devices too.' : 'It applies on this device. Connect sync to use it on your other devices.'}</p><button class="btn" id="pdone" type="button">Done</button>`;
+    w.innerHTML = `<div class="okc">${svg(IC.check, 30)}</div><h2>${rm ? 'PIN removed' : had ? 'PIN changed' : 'PIN set'}</h2><p class="pmsg">${rm ? 'Card details no longer ask for a PIN. ' : ''}${Sync.connected() ? 'It will update on your other devices too.' : 'It applies on this device. Connect sync to use it on your other devices.'}</p><button class="btn" id="pdone" type="button">Done</button>`;
     $('#pdone').onclick = () => renderSettings('main');
   };
   w.onclick = e => {
@@ -1728,7 +1731,9 @@ function renderPinPage(host) {
     if (v.length < 4) { draw(); return; }
     const got = v; v = '';
     if (step === 'cur') {
-      if (pinOk(got)) { step = 'nw'; draw(); } else draw('Wrong PIN. Try again.', true);
+      if (!pinOk(got)) draw('Wrong PIN. Try again.', true);
+      else if (rm) done();
+      else { step = 'nw'; draw(); }
     } else if (step === 'nw') {
       first = got; step = 'cf'; draw();
     } else if (got === first) done();
@@ -2143,8 +2148,8 @@ function renderSettings(page) {
     edDecorate();
   } else if (page === 'sync') {
     renderSyncPage(host);
-  } else if (page === 'pin') {
-    renderPinPage(host);
+  } else if (page === 'pin' || page === 'pinrm') {
+    renderPinPage(host, page === 'pinrm' ? 'remove' : '');
   } else if (page === 'data') {
     renderDataPage(host);
   } else if (page === 'restore') {
@@ -2158,7 +2163,7 @@ function renderSettings(page) {
     <div class="sec">Home screen</div>
     <div class="panel sp"><button class="row rowb" id="setHome" type="button"><div class="ic" style="color:#ffb700">${svg(SET_IC.home, 19)}</div><div class="rm"><div class="val">Customize Home</div><div class="lab">Order and size of cards</div></div>${svg(IC.right, 18)}</button></div>
     <div class="sec">Security</div>
-    <div class="panel sp"><button class="row rowb" id="setPin" type="button"><div class="ic" style="color:#9d4edd">${svg(SET_IC.lock, 19)}</div><div class="rm"><div class="val">Change PIN</div><div class="lab">Passcode for card details</div></div>${svg(IC.right, 18)}</button></div>
+    <div class="panel sp"><button class="row rowb" id="setPin" type="button"><div class="ic" style="color:#9d4edd">${svg(SET_IC.lock, 19)}</div><div class="rm"><div class="val">${hasPin() ? 'Change PIN' : 'Set PIN'}</div><div class="lab">${hasPin() ? 'Passcode for card details' : 'Ask for a passcode before showing card details'}</div></div>${svg(IC.right, 18)}</button>${hasPin() ? `<button class="row rowb" id="setPinRm" type="button"><div class="ic" style="color:#ff5000">${svg(SET_IC.lock, 19)}</div><div class="rm"><div class="val">Remove PIN</div><div class="lab">Show card details without a passcode</div></div>${svg(IC.right, 18)}</button>` : ''}</div>
     <div class="sec">Data</div>
     <div class="panel sp"><button class="row rowb" id="setData" type="button"><div class="ic" style="color:#0094ff">${svg(SET_IC.data, 19)}</div><div class="rm"><div class="val">Export and restore</div><div class="lab">Backups, CSV and JSON</div></div>${svg(IC.right, 18)}</button></div>`;
     const inp = $('#setName'); let nt = 0;
@@ -2171,6 +2176,7 @@ function renderSettings(page) {
     $('#setSync').onclick = () => renderSettings('sync');
     $('#setHome').onclick = () => renderSettings('home');
     $('#setPin').onclick = () => renderSettings('pin');
+    if ($('#setPinRm')) $('#setPinRm').onclick = () => renderSettings('pinrm');
     $('#setData').onclick = () => renderSettings('data');
     $$('#setAv').forEach(a => { a.className = 'av big' + (Sync.cur.cls ? ' ' + Sync.cur.cls : ''); });
     $$('.syncT').forEach(x => { x.textContent = Sync.cur.text; }); $$('.sync-v').forEach(x => { x.classList.remove('w', 'e'); if (Sync.cur.cls) x.classList.add(Sync.cur.cls); });
