@@ -348,7 +348,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .n-sum .n-wrow{margin-top:14px;gap:20px}
 .n-sum .bsub{font-size:13px;display:block}
 .n-sumtop{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
-.n-sg{display:flex;gap:3px;height:12px;margin-top:14px}.n-sg i{display:block;height:100%;border-radius:4px;min-width:4px}.n-sg:empty{display:none}
+.n-sg{display:flex;gap:3px;height:12px;margin-top:14px}.n-sum .n-sg{margin-top:12px}.n-sg i{display:block;height:100%;border-radius:4px;min-width:4px}.n-sg:empty{display:none}
 /* donut + legend */
 .n-donut{width:112px;height:112px}.n-donut svg{width:100%;height:100%}
 .n-lg{gap:9px;font-size:13px}.n-lg em{font-family:inherit;font-size:13px;color:var(--mut)}.n-lg span{color:var(--sub)}.n-lg i{width:9px;height:9px}
@@ -512,10 +512,10 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
   <div class="n-card still n-sum">
     <div class="lbl" style="margin:0">Total monthly expenses</div>
     <div class="n-big"><i>$</i><b id="eTotal">0.00</b></div>
-    <div class="n-wrow" id="eWrow"><div class="n-donut" id="eDonut"></div><div class="n-lg" id="eLeg"></div></div>
-    <div class="n-sg" id="eSg" hidden><i style="flex:1;background:var(--p2)"></i></div>
+    <div class="n-sg" id="eSg" style="margin-top:0"></div>
   </div>
   <button class="n-mrow" type="button" id="eMaaBtn"><span><i></i>Maaser</span><span class="xa" id="eMaa">$0.00</span></button>
+  <div class="hh"><span class="sec">By expense</span></div>
   <div class="lcard"><div id="eList"></div>
     <div id="eEmpty" class="emp" hidden><div class="ei"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4h10a1 1 0 0 1 1 1v15l-3-2-3 2-3-2-3 2V5a1 1 0 0 1 1-1z"/><path d="M9 9h6M9 13h4"/></svg></div><b>No expenses yet</b><span>Tap + to add your first expense.</span></div>
   </div>
@@ -1226,54 +1226,38 @@ function ensureSubs() {
   saveState();
 }
 
-function donutHtml(act, total) {
-  const r = 60, C = 2 * Math.PI * r;
-  let cum = 0, c = `<circle cx="80" cy="80" r="${r}" fill="none" stroke="#172a32" stroke-width="22"/>`;
-  act.forEach((e, i) => {
-    const len = e.amount / total * C;
-    const L = Math.max(len - (act.length > 1 ? 2 : 0), 0.5);
-    c += `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${EXP_COLORS[i % EXP_COLORS.length]}" stroke-width="22" stroke-dasharray="${L.toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-cum).toFixed(2)}"/>`;
-    cum += len;
-  });
-  return c;
-}
-
 function renderExpenses(skipList) {
   const act = activeExp(), total = totalExp();
   $('#eTotal').textContent = nf(total);
   $('#eMaa').textContent = mf(S.maaser.amount);
 
-  const label = act.length ? 'Expense wheel. ' + act.slice(0, 3).map(e => e.desc + ' ' + Math.round(e.amount / total * 100) + ' percent').join(', ') : 'Expense wheel. No expenses yet.';
-  $('#eDonut').innerHTML = `<svg viewBox="0 0 160 160" width="112" height="112" role="img" aria-label="${esc(label)}">${act.length ? donutHtml(act, total) : '<circle cx="80" cy="80" r="60" fill="none" stroke="#172a32" stroke-width="22"/>'}</svg>
-    <div class="n-dc"><b>${act.length}</b><small>active</small></div>`;
-  $('#eLeg').innerHTML = act.length
-    ? act.map((e, i) => `<div><i style="background:${EXP_COLORS[i % EXP_COLORS.length]}"></i><span>${esc(e.desc)}</span><em>${Math.round(e.amount / total * 100)}%</em></div>`).join('')
-    : '<div><span style="color:var(--mut)">Awaiting expenses</span></div>';
-
-  $('#eWrow').hidden = !act.length; $('#eSg').hidden = !!act.length;
+  /* one bar, one segment per active expense */
+  $('#eSg').innerHTML = act.length ? act.map((e, i) => `<i style="flex:${e.amount};background:${EXP_COLORS[i % EXP_COLORS.length]}"></i>`).join('') : '<i style="flex:1;background:var(--p2)"></i>';
   if (skipList) return;
   renderExpenseList();
 }
 
 function renderExpenseList() {
-  const all = allExpSorted();
+  const all = allExpSorted(), tot = totalExp();
+  const pct = e => tot > 0 && e.amount > 0 ? Math.round(e.amount / tot * 100) + '% of total' : '';
   const colors = {};
   activeExp().forEach((e, i) => { colors[e.id] = EXP_COLORS[i % EXP_COLORS.length]; });
   const visible = all;
   const onlyEmptySubs = all.length === 1 && all[0].id === SUBS_ID && !(all[0].subItems || []).length;
   $('#eEmpty').hidden = !onlyEmptySubs;
   $('#eList').innerHTML = visible.map(e => {
-    if (e.id === SUBS_ID) return subsRow(e, colors[e.id] || '#9d4edd');
+    if (e.id === SUBS_ID) return subsRow(e, colors[e.id] || '#9d4edd', pct(e));
     const off = e.isArchived ? ' off' : '';
     const badge = e.isArchived ? '<span class="badge">Paused</span>' : '';
     const dot = e.isArchived ? '#6b7280' : (colors[e.id] || '#6b7280');
-    return `<button class="xr${off}" type="button" data-id="${esc(e.id)}"><span class="xl"><i class="xd" style="background:${dot}"></i><span class="xt"><b><span class="t">${esc(e.desc)}</span>${badge}</b>${e.note ? `<small>${esc(e.note)}</small>` : ''}</span></span><span class="xa">${mf(e.amount)}</span></button>`;
+    const sub = [e.isArchived ? '' : pct(e), e.note].filter(Boolean).join(' \u00b7 ');
+    return `<button class="xr${off}" type="button" data-id="${esc(e.id)}"><span class="xl"><i class="xd" style="background:${dot}"></i><span class="xt"><b><span class="t">${esc(e.desc)}</span>${badge}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span></span><span class="xa">${mf(e.amount)}</span></button>`;
   }).join('');
 }
 
-function subsRow(e, color) {
+function subsRow(e, color, pctTxt) {
   const items = (e.subItems || []).slice().sort((a, b) => b.amount - a.amount);
-  const sub = items.length === 1 ? '1 subscription' : items.length + ' subscriptions';
+  const sub = (items.length === 1 ? '1 subscription' : items.length + ' subscriptions') + (pctTxt ? ' \u00b7 ' + pctTxt : '');
   let h = `<button class="xr" type="button" data-id="${SUBS_ID}" aria-expanded="${subsOpen}"><span class="xl"><i class="xd" style="background:${items.length ? color : '#6b7280'}"></i><span class="xt"><b><span class="t">Subscriptions</span></b><small>${sub}</small></span></span><span style="display:flex;align-items:center;gap:8px"><span class="xa">${mf(e.amount)}</span><span class="chev${subsOpen ? ' up' : ''}">${svg(IC.down, 16)}</span></span></button>`;
   if (subsOpen) {
     h += `<div class="xs">${items.length ? items.map(s => `<div class="si"><span>${esc(s.name)}</span><span class="r"><span>${mf(s.amount)}</span><button type="button" class="sub-rm" data-sid="${esc(s.id)}" aria-label="Remove ${esc(s.name)}">${svg(IC.x, 14)}</button></span></div>`).join('') : '<div class="none">No subscriptions yet.</div>'}
@@ -1916,7 +1900,6 @@ function setTab(t) {
   if (t !== 'home') exitHomeEdit();
   $('#fab').hidden = t === 'home';
   $('#fab').setAttribute('aria-label', t === 'exp' ? 'Add expense' : t === 'cards' ? 'Add card' : 'Add payment');
-  LS.set('et_tab', t);
   window.scrollTo(0, 0);
   $$('.lci').forEach(b => b.classList.toggle('on', b.dataset.t === t));
   $('#tabs').classList.toggle('home', t === 'home');
@@ -2038,8 +2021,7 @@ function init() {
   loadState();
   ensureSubs();
   bindGlobal();
-  const t = LS.get('et_tab');
-  setTab(TABS.some(x => x.t === t) ? t : 'home');
+  setTab('home');   /* always open on Home */
   glideKick(true);
   addEventListener('resize', () => glideKick(true));
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => glideKick(true));
