@@ -1087,7 +1087,7 @@ function renderNextUp() {
 }
 
 /* "Good evening, Alex": by the hour on this phone; the date sits above it. Midnight to 5am is "Late check-in". */
-const greetWord = h => h < 5 ? 'Up late' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+const greetWord = h => h < 5 ? 'Late check-in' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 function paintGreeting() {
   const d = new Date(), n = firstName(), el = $('#hDay'), g = greetWord(d.getHours());
   $('#hDate').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
