@@ -17,7 +17,7 @@
 :root{--bg:#0e1e24;--p1:#12242c;--p2:#172a32;--line:#1f2937;--mut:#8a94a0;--sub:#9ca3af;--g:#00c805;--amb:#ffb700;--blue:#0094ff;--org:#ff5000;--gen:linear-gradient(145deg,#3b4046,#1b1e22)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:#e5e7eb;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
-body{min-height:100vh;max-width:430px;margin:0 auto;padding:calc(20px + env(safe-area-inset-top)) 16px calc(170px + env(safe-area-inset-bottom));user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+body{min-height:100vh;max-width:430px;margin:0 auto;padding:calc(36px + env(safe-area-inset-top)) 16px calc(170px + env(safe-area-inset-bottom));user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 button,input,select,textarea{font:inherit}
 button{color:inherit}
 input,textarea{user-select:text;-webkit-user-select:text}
@@ -339,6 +339,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .pill .syncT{font-family:inherit}
 .hm-r{align-items:center}.hm-edit{margin-top:0}
 #hTop>div:first-child{display:block;flex:1;min-width:0;padding-right:12px}
+#hDate{font-size:14px;font-weight:500;color:var(--sub);margin:3px 0 3px;line-height:1.2}
 #hDay{font-family:'Sora',-apple-system,system-ui,sans-serif;font-size:26px;font-weight:700;color:#fff;letter-spacing:-.02em;margin:0;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lbl{font-size:13px;letter-spacing:0;text-transform:none;color:var(--mut);font-weight:500}
 .n-maaT{font-size:13px;letter-spacing:0;text-transform:none;color:var(--mut)}
@@ -493,7 +494,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 <!-- ===================== HOME ===================== -->
 <div id="vHome" class="view">
   <div class="top" id="hTop">
-    <div><div class="dn" id="hDay"></div></div>
+    <div><div class="dd" id="hDate"></div><div class="dn" id="hDay"></div></div>
     <button class="av hav" id="hAvatar" type="button" aria-label="Open settings"><b></b></button>
   </div>
 
@@ -1089,6 +1090,7 @@ function renderNextUp() {
 const greetWord = h => h < 5 ? 'Up late' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 function paintGreeting() {
   const d = new Date(), n = firstName(), el = $('#hDay'), g = greetWord(d.getHours());
+  $('#hDate').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   el.textContent = n ? g + ', ' + n : g;
   let s = 26; el.style.fontSize = s + 'px';
   /* a long name shrinks the line a little so it never gets cut off */
