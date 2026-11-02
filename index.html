@@ -488,9 +488,14 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .opt.on{border-color:var(--g)}.opt.on i{border-color:var(--g);background:radial-gradient(circle,var(--g) 0 45%,transparent 50%)}
 .opt b{display:block;font-size:15px;font-weight:600}.opt small{display:block;margin-top:3px;font-size:13px;color:var(--sub);line-height:1.35}
 #settings .stat{margin:10px 2px 14px}
+
+/* iOS 26 draws a soft blur under the status bar of installed web apps unless a solid, full-width fixed bar sits at the top edge */
+#sbEdge{position:fixed;top:0;left:0;width:100%;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:40;pointer-events:none}
 </style>
 </head>
 <body>
+<!-- iOS 26 status-bar strip: a solid, full-width fixed bar at the very top stops iOS blurring the first ~40pt of the page -->
+<div id="sbEdge" aria-hidden="true"></div>
 <!-- ===================== HOME ===================== -->
 <div id="vHome" class="view">
   <div class="top" id="hTop">
