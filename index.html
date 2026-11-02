@@ -1313,26 +1313,25 @@ function renderExpenses(skipList) {
 }
 
 function renderExpenseList() {
-  const all = allExpSorted(), tot = totalExp();
-  const pct = e => tot > 0 && e.amount > 0 ? Math.round(e.amount / tot * 100) + '% of total' : '';
+  const all = allExpSorted();
   const colors = {};
   activeExp().forEach((e, i) => { colors[e.id] = EXP_COLORS[i % EXP_COLORS.length]; });
   const visible = all;
   const onlyEmptySubs = all.length === 1 && all[0].id === SUBS_ID && !(all[0].subItems || []).length;
   $('#eEmpty').hidden = !onlyEmptySubs;
   $('#eList').innerHTML = visible.map(e => {
-    if (e.id === SUBS_ID) return subsRow(e, colors[e.id] || '#9d4edd', pct(e));
+    if (e.id === SUBS_ID) return subsRow(e, colors[e.id] || '#9d4edd');
     const off = e.isArchived ? ' off' : '';
     const badge = e.isArchived ? '<span class="badge">Paused</span>' : '';
     const dot = e.isArchived ? '#6b7280' : (colors[e.id] || '#6b7280');
-    const sub = [e.isArchived ? '' : pct(e), e.note].filter(Boolean).join(' \u00b7 ');
+    const sub = e.note || '';
     return `<button class="xr${off}" type="button" data-id="${esc(e.id)}"><span class="xl"><i class="xd" style="background:${dot}"></i><span class="xt"><b><span class="t">${esc(e.desc)}</span>${badge}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span></span><span class="xa">${mf(e.amount)}</span></button>`;
   }).join('');
 }
 
-function subsRow(e, color, pctTxt) {
+function subsRow(e, color) {
   const items = (e.subItems || []).slice().sort((a, b) => b.amount - a.amount);
-  const sub = (items.length === 1 ? '1 subscription' : items.length + ' subscriptions') + (pctTxt ? ' \u00b7 ' + pctTxt : '');
+  const sub = (items.length === 1 ? '1 subscription' : items.length + ' subscriptions');
   let h = `<button class="xr" type="button" data-id="${SUBS_ID}" aria-expanded="${subsOpen}"><span class="xl"><i class="xd" style="background:${items.length ? color : '#6b7280'}"></i><span class="xt"><b><span class="t">Subscriptions</span></b><small>${sub}</small></span></span><span style="display:flex;align-items:center;gap:8px"><span class="xa">${mf(e.amount)}</span><span class="chev${subsOpen ? ' up' : ''}">${svg(IC.down, 16)}</span></span></button>`;
   if (subsOpen) {
     h += `<div class="xs">${items.length ? items.map(s => `<div class="si"><span>${esc(s.name)}</span><span class="r"><span>${mf(s.amount)}</span><button type="button" class="sub-rm" data-sid="${esc(s.id)}" aria-label="Remove ${esc(s.name)}">${svg(IC.x, 14)}</button></span></div>`).join('') : '<div class="none">No subscriptions yet.</div>'}
