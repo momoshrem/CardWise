@@ -340,7 +340,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .hm-r{align-items:center}.hm-edit{margin-top:0}
 #hTop>div:first-child{display:block;flex:1;min-width:0;padding-right:12px}
 #hDate{font-size:14px;font-weight:500;color:var(--sub);margin:0 0 6px;line-height:1.2}
-#hDay{font-family:'Sora',-apple-system,system-ui,sans-serif;font-size:22px;font-weight:700;color:#fff;letter-spacing:-.02em;margin:0;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#hDay{font-family:'Sora',-apple-system,system-ui,sans-serif;font-size:24px;font-weight:700;color:#fff;letter-spacing:-.02em;margin:0;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lbl{font-size:13px;letter-spacing:0;text-transform:none;color:var(--mut);font-weight:500}
 .n-maaT{font-size:13px;letter-spacing:0;text-transform:none;color:var(--mut)}
 .n-card{border-radius:22px}.n-tile{border-radius:22px}
@@ -1092,7 +1092,7 @@ function paintGreeting() {
   const d = new Date(), n = firstName(), el = $('#hDay'), g = greetWord(d.getHours());
   $('#hDate').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   el.textContent = n ? g + ', ' + n : g;
-  let s = 22; el.style.fontSize = s + 'px';
+  let s = 24; el.style.fontSize = s + 'px';
   /* a long name shrinks the line a little so it never gets cut off */
   if (el.clientWidth > 0) while (el.scrollWidth > el.clientWidth + 1 && s > 17) { s--; el.style.fontSize = s + 'px'; }
 }
