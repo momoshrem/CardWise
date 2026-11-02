@@ -339,8 +339,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .pill .syncT{font-family:inherit}
 .hm-r{align-items:center}.hm-edit{margin-top:0}
 #hTop>div:first-child{display:block;flex:1;min-width:0;padding-right:12px}
-#hDate{font-size:14px;font-weight:500;color:var(--sub);margin:3px 0 3px;line-height:1.2}
-#hDay{font-family:'Sora',-apple-system,system-ui,sans-serif;font-size:24px;font-weight:700;color:#fff;letter-spacing:-.02em;margin:0;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#hDay{font-family:'Sora',-apple-system,system-ui,sans-serif;font-size:26px;font-weight:700;color:#fff;letter-spacing:-.02em;margin:0;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lbl{font-size:13px;letter-spacing:0;text-transform:none;color:var(--mut);font-weight:500}
 .n-maaT{font-size:13px;letter-spacing:0;text-transform:none;color:var(--mut)}
 .n-card{border-radius:22px}.n-tile{border-radius:22px}
@@ -488,18 +487,13 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .opt.on{border-color:var(--g)}.opt.on i{border-color:var(--g);background:radial-gradient(circle,var(--g) 0 45%,transparent 50%)}
 .opt b{display:block;font-size:15px;font-weight:600}.opt small{display:block;margin-top:3px;font-size:13px;color:var(--sub);line-height:1.35}
 #settings .stat{margin:10px 2px 14px}
-
-/* iOS 26 draws a soft blur under the status bar of installed web apps unless a solid, full-width fixed bar sits at the top edge */
-#sbEdge{position:fixed;top:0;left:0;width:100%;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:40;pointer-events:none}
 </style>
 </head>
 <body>
-<!-- iOS 26 status-bar strip: a solid, full-width fixed bar at the very top stops iOS blurring the first ~40pt of the page -->
-<div id="sbEdge" aria-hidden="true"></div>
 <!-- ===================== HOME ===================== -->
 <div id="vHome" class="view">
   <div class="top" id="hTop">
-    <div><div class="dd" id="hDate"></div><div class="dn" id="hDay"></div></div>
+    <div><div class="dn" id="hDay"></div></div>
     <button class="av hav" id="hAvatar" type="button" aria-label="Open settings"><b></b></button>
   </div>
 
@@ -1095,9 +1089,8 @@ function renderNextUp() {
 const greetWord = h => h < 5 ? 'Up late' : h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
 function paintGreeting() {
   const d = new Date(), n = firstName(), el = $('#hDay'), g = greetWord(d.getHours());
-  $('#hDate').textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
   el.textContent = n ? g + ', ' + n : g;
-  let s = 24; el.style.fontSize = s + 'px';
+  let s = 26; el.style.fontSize = s + 'px';
   /* a long name shrinks the line a little so it never gets cut off */
   if (el.clientWidth > 0) while (el.scrollWidth > el.clientWidth + 1 && s > 17) { s--; el.style.fontSize = s + 'px'; }
 }
