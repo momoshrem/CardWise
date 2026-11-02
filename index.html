@@ -488,6 +488,22 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .opt.on{border-color:var(--g)}.opt.on i{border-color:var(--g);background:radial-gradient(circle,var(--g) 0 45%,transparent 50%)}
 .opt b{display:block;font-size:15px;font-weight:600}.opt small{display:block;margin-top:3px;font-size:13px;color:var(--sub);line-height:1.35}
 #settings .stat{margin:10px 2px 14px}
+
+/* Next up: countdown ring in the card's chart color, details beside it */
+.nr{display:flex;align-items:center;gap:16px}
+.nr-ring{position:relative;width:92px;height:92px;flex:none}.nr-ring svg{display:block;transform:rotate(-90deg)}
+.nr-mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.nr-mid b{font-size:30px;font-weight:600;color:#fff;line-height:1}.nr-mid b.t{font-size:19px}.nr-mid span{font-size:12px;color:var(--sub);margin-top:2px}
+.nr-txt{flex:1;min-width:0}
+.nr-head{margin-bottom:12px}
+.nr-ttl{font-size:17px;font-weight:600;color:#fff;line-height:1.2}
+.nr-list{display:flex;flex-direction:column;gap:3px;margin-top:6px}
+.nr-list div{display:flex;align-items:center;gap:7px;min-width:0;font-size:14px;color:#d1d5db}
+.nr-list i{width:9px;height:9px;border-radius:3px;flex:none}
+.nr-list s{text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.nr-list .n-tag{font-size:11px;font-weight:600;letter-spacing:0;flex:none}
+#hNext .n-next .n-then{margin-top:12px;padding-top:9px}
+.nr-then{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style>
 </head>
 <body>
@@ -549,7 +565,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
   <div class="n-card still n-sum">
     <div class="lbl" style="margin:0">Total monthly expenses</div>
     <div class="n-big"><i>$</i><b id="eTotal">0.00</b></div>
-    <div class="n-sg" id="eSg" style="margin-top:0"></div>
+    <div class="n-wrow"><div class="n-donut" id="eDonut"></div><div class="n-lg" id="eLeg"></div></div>
   </div>
   <button class="n-mrow" type="button" id="eMaaBtn"><span><i></i>Maaser</span><span class="xa" id="eMaa">$0.00</span></button>
   <div class="hh"><span class="sec">By expense</span></div>
@@ -1022,20 +1038,6 @@ function nextUpInfo() {
   return { kind, group, other, date, days, stmt, frac, then };
 }
 
-/* shrink the chips on a same-day row until they sit side by side; wrap only if even the smallest size won't fit */
-function fitNextChips() {
-  document.querySelectorAll('#hNext .n-fitrow').forEach(r => {
-    const W = r.clientWidth; if (!W) return;
-    const kids = [...r.children];
-    const used = () => kids.reduce((a, c) => a + c.getBoundingClientRect().width, 0) + 8 * (kids.length - 1);
-    r.style.flexWrap = 'nowrap';
-    let f = 12;
-    for (; f >= 8.5; f -= 0.25) { kids.forEach(c => { c.style.fontSize = f + 'px'; }); if (used() <= W) return; }
-    r.style.flexWrap = 'wrap';
-  });
-}
-window.addEventListener('resize', fitNextChips);
-
 function renderNextUp() {
   const host = $('#hNext');
   const info = nextUpInfo();
@@ -1045,45 +1047,51 @@ function renderNextUp() {
       <div class="n-none">${S.cards.length ? 'Add a payment due day or statement day to a card to see a countdown here.' : 'Add a card to see when your next payment is due.'}</div></button>`;
     return;
   }
-  const { kind, group, other, date, days, stmt, frac, then } = info;
+  const { kind, group, other, date, days, frac, then } = info;
   const many = group.length > 1, st = kind === 's', both = other.length > 0;
-  const count = days === 0 ? '<b>Today</b>' : `<b>${days}</b><span>${days === 1 ? 'day' : 'days'}</span>`;
-  let sub;
-  if (both) {
-    const pm = many, sm = other.length > 1;
-    sub = days === 0 ? `${pm ? 'Payments due' : 'Payment due'} \u00b7 ${sm ? 'statements close' : 'statement closes'} today`
-      : `until ${pm ? 'payments are due' : 'payment is due'} \u00b7 ${sm ? 'statements close' : 'statement closes'}`;
-  } else if (st) {
-    sub = days === 0 ? (many ? 'Statements close today' : 'Statement closes today') : (many ? 'until statements close' : 'until statement closes');
-  } else {
-    sub = days === 0 ? (many ? 'Payments are due today' : 'Payment is due today') : (many ? 'until payments are due' : 'until payment is due');
-  }
-  const bar = frac == null ? '' : `<div class="n-prog" aria-hidden="true"><i style="width:${(frac * 100).toFixed(1)}%"></i></div>
-      <div class="n-ends">${st ? `<span>Last closed ${esc(short(stmt))}</span><span>Closes ${esc(short(date))}</span>`
-        : `<span>${many ? 'Statements' : 'Statement'} closed ${esc(short(stmt))}</span><span>Due ${esc(short(date))}</span>`}</div>`;
-  const chip = (c, tag) => `<span class="n-chip"><i style="background:${esc(cCol(c.id))}"></i><span>${esc(lbl(c))}</span>${tag ? `<em class="n-tag ${tag === 'DUE' ? 'p' : 's'}">${tag}</em>` : ''}</span>`;
-  /* several chips share one row, shrunk to fit; same-day payment + statement chips carry a tag */
-  const chips = both
-    ? `<div class="n-fitrow">${group.map(c => chip(c, 'DUE')).join('')}${other.map(c => chip(c, 'STATEMENT')).join('')}</div>`
-    : many ? `<div class="n-fitrow">${group.map(c => chip(c)).join('')}</div>`
-    : group.map(c => chip(c)).join('');
-  const names = a => a.map(c => esc(lbl(c))).join(', ');
+  /* title: "Payment due", "Statements close", or "Payment & statement" when both fall on the same day */
+  const title = both ? `${many ? 'Payments' : 'Payment'} &amp; ${other.length > 1 ? 'statements' : 'statement'}`
+    : st ? (many ? 'Statements close' : 'Statement closes') : (many ? 'Payments due' : 'Payment due');
+  /* ring: one section per card in its chart color; it fills from the last statement to the date */
+  const ringCards = group.concat(other.filter(c => !group.includes(c)));
+  const R = 40, C = 2 * Math.PI * R, n = ringCards.length, gap = n > 1 ? 5 : 0;
+  const fill = days === 0 || frac == null ? 1 : Math.max(frac, 0.02), faint = days !== 0 && frac == null;
+  let arcs = '', off = 0;
+  ringCards.forEach(c => {
+    const seg = C * fill / n, L = Math.max(seg - gap, 1);
+    arcs += `<circle cx="46" cy="46" r="${R}" fill="none" stroke="${esc(cCol(c.id))}" stroke-width="9" stroke-linecap="${n > 1 ? 'butt' : 'round'}" stroke-dasharray="${L.toFixed(1)} 999" stroke-dashoffset="${(-off).toFixed(1)}"${faint ? ' opacity=".4"' : ''}/>`;
+    off += seg;
+  });
+  const mid = days === 0 ? '<b class="t">Today</b>' : `<b>${days}</b><span>${days === 1 ? 'day' : 'days'}</span>`;
+  const row = (c, tag) => `<div><i style="background:${esc(cCol(c.id))}"></i><s>${esc(lbl(c))}</s>${tag ? `<em class="n-tag ${tag === 'Payment' ? 'p' : 's'}">${tag}</em>` : ''}</div>`;
+  const list = both ? group.map(c => row(c, 'Payment')).join('') + other.map(c => row(c, 'Statement')).join('') : group.map(c => row(c)).join('');
+  /* "Then Nov 10 \u00b7 Chase, Amex statements close": short card names, one line */
   let thenTxt = '';
   if (then) {
     const parts = [];
-    if (then.p.length) parts.push(`${then.p.length > 1 ? 'payments due' : 'payment due'} \u00b7 ${names(then.p)}`);
-    if (then.s.length) parts.push(`${then.s.length > 1 ? 'statements close' : 'statement closes'} \u00b7 ${names(then.s)}`);
-    thenTxt = `<div class="n-then">Then ${esc(short(then.d))}: ${parts.join('; ')}</div>`;
+    if (then.p.length) parts.push(`${shortNames(then.p)} ${then.p.length > 1 ? 'payments due' : 'payment due'}`);
+    if (then.s.length) parts.push(`${shortNames(then.s)} ${then.s.length > 1 ? 'statements close' : 'statement closes'}`);
+    thenTxt = `<div class="n-then nr-then">Then ${esc(short(then.d))} \u00b7 ${parts.join(' \u00b7 ')}</div>`;
   }
+  const names = a => a.map(c => esc(lbl(c))).join(', ');
   const what = both ? 'payment due and statement closes' : st ? 'statement closes' : 'payment due';
-  host.innerHTML = `<button class="n-card n-next${st ? ' st' : ''}${days <= 3 ? ' urgent' : ''}" type="button" data-go="cards" aria-label="Next ${what} ${esc(weekdayDate(date))}. Open Cards">
-    <div class="n-row"><span class="lbl" style="margin:0">Next up</span><span class="n-date">${esc(weekdayDate(date))}</span></div>
-    <div class="n-count">${count}</div>
-    <div class="n-sub">${sub}</div>
-    ${bar}
-    <div class="n-chips">${chips}</div>
+  const when = days === 0 ? 'today' : `in ${days} ${days === 1 ? 'day' : 'days'}`;
+  host.innerHTML = `<button class="n-card n-next${st ? ' st' : ''}${days <= 3 ? ' urgent' : ''}" type="button" data-go="cards" aria-label="Next ${what} ${when}, ${esc(weekdayDate(date))}: ${names(both ? group.concat(other) : group)}. Open Cards">
+    <div class="n-row nr-head"><span class="lbl" style="margin:0">Next up</span><span class="n-date">${esc(weekdayDate(date))}</span></div>
+    <div class="nr">
+      <div class="nr-ring" aria-hidden="true"><svg width="92" height="92" viewBox="0 0 92 92"><circle cx="46" cy="46" r="${R}" fill="none" stroke="#1d343d" stroke-width="9"/>${arcs}</svg><div class="nr-mid">${mid}</div></div>
+      <div class="nr-txt"><div class="nr-ttl">${title}</div><div class="nr-list">${list}</div></div>
+    </div>
     ${thenTxt}</button>`;
-  fitNextChips();
+}
+
+/* first word of a card's name ("Chase" for Chase Freedom Unlimited), unless another card starts with the same word */
+function shortNames(cards) {
+  const first = c => lbl(c).split(/\s+/)[0];
+  return cards.map(c => {
+    const f = first(c), clash = S.cards.some(o => o.id !== c.id && first(o).toLowerCase() === f.toLowerCase());
+    return esc(clash || lbl(c).split(/\s+/).length < 2 ? lbl(c) : f);
+  }).join(', ');
 }
 
 /* "Good evening, Alex": by the hour on this phone; the date sits above it. Midnight to 5am is "Late check-in". */
@@ -1276,13 +1284,30 @@ function ensureSubs() {
   saveState();
 }
 
+function donutHtml(act, total) {
+  const r = 60, C = 2 * Math.PI * r;
+  let cum = 0, c = `<circle cx="80" cy="80" r="${r}" fill="none" stroke="#172a32" stroke-width="22"/>`;
+  act.forEach((e, i) => {
+    const len = e.amount / total * C;
+    const L = Math.max(len - (act.length > 1 ? 2 : 0), 0.5);
+    c += `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${EXP_COLORS[i % EXP_COLORS.length]}" stroke-width="22" stroke-dasharray="${L.toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-cum).toFixed(2)}"/>`;
+    cum += len;
+  });
+  return c;
+}
+
 function renderExpenses(skipList) {
   const act = activeExp(), total = totalExp();
   $('#eTotal').textContent = nf(total);
   $('#eMaa').textContent = mf(S.maaser.amount);
 
-  /* one bar, one segment per active expense */
-  $('#eSg').innerHTML = act.length ? act.map((e, i) => `<i style="flex:${e.amount};background:${EXP_COLORS[i % EXP_COLORS.length]}"></i>`).join('') : '<i style="flex:1;background:var(--p2)"></i>';
+  /* expense wheel: one slice per active expense, legend with each share */
+  const label = act.length ? 'Expense wheel. ' + act.slice(0, 3).map(e => e.desc + ' ' + Math.round(e.amount / total * 100) + ' percent').join(', ') : 'Expense wheel. No expenses yet.';
+  $('#eDonut').innerHTML = `<svg viewBox="0 0 160 160" width="128" height="128" role="img" aria-label="${esc(label)}">${act.length ? donutHtml(act, total) : '<circle cx="80" cy="80" r="60" fill="none" stroke="#172a32" stroke-width="22"/>'}</svg>
+    <div class="n-dc"><b>${act.length}</b><small>active</small></div>`;
+  $('#eLeg').innerHTML = act.length
+    ? act.map((e, i) => `<div><i style="background:${EXP_COLORS[i % EXP_COLORS.length]}"></i><span>${esc(e.desc)}</span><em>${Math.round(e.amount / total * 100)}%</em></div>`).join('')
+    : '<div><span style="color:var(--mut)">Awaiting expenses</span></div>';
   if (skipList) return;
   renderExpenseList();
 }
