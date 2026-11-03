@@ -1,6 +1,6 @@
 /* CardWise service worker: keeps the app working offline.
    Your data lives in the browser and in your private gist, never in this cache. */
-const VERSION = 'et-v12';
+const VERSION = 'et-v13';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
