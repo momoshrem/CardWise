@@ -489,6 +489,23 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .zrows{margin:8px 0 2px;border-top:1px solid var(--line)}
 .zrows div{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--line);font-size:14px;color:var(--sub)}
 .zrows b{font-size:15px;font-weight:600;color:var(--tx)}.zrows b.zg{color:var(--hi)}
+
+/* card Year view: a picked month stays lit, the others dim */
+.y12.picking .yc:not(.pick) .yb{opacity:.35}.y12 .yc.pick small{color:var(--tx);font-weight:700}
+.y12 .yc.pick .yb{box-shadow:0 0 0 2px var(--line)}
+#cpsec{display:flex;justify-content:space-between;align-items:center}#cpsec .lk{min-height:0;font-size:13px}
+
+/* hold Year: a small menu of years with each year's total */
+#ymscrim{position:fixed;inset:0;z-index:80}
+#ymenu{position:fixed;z-index:81;min-width:200px;background:var(--p2);border:1px solid var(--line);border-radius:16px;padding:6px;box-shadow:0 18px 40px rgba(0,0,0,.45);animation:ymin .14s ease-out}
+@keyframes ymin{from{opacity:0;transform:translateY(-4px) scale(.97)}}
+#ymenu .ymh{font-size:12px;color:var(--sub);padding:8px 12px 6px}
+#ymenu button{display:flex;width:100%;justify-content:space-between;align-items:center;gap:16px;border:0;background:none;color:var(--tx);font:inherit;font-size:16px;font-weight:600;padding:12px;border-radius:11px;cursor:pointer;min-height:44px}
+#ymenu button em{font-style:normal;font-size:14px;font-weight:500;color:var(--sub)}#ymenu button em.zg{color:var(--hi)}
+#ymenu button.on{background:var(--segon)}#ymenu button.on span::after{content:" \2713";color:var(--hi)}
+/* Year in the switch has a small down arrow: tap it again to pick another year */
+.pmode button[data-v=year]::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-right:1.6px solid currentColor;border-bottom:1.6px solid currentColor;transform:translateY(-3px) rotate(45deg);opacity:.75}
+.pmode button{padding:7px 10px}
 </style>
 </head>
 <body>
@@ -2071,8 +2088,7 @@ const payYears = () => Array.from(new Set(live().concat(zel()).map(p => +p.date.
 function refreshYear() {
   const yrs = payYears(); if (!yrs.includes(selY)) selY = CUR.y;
   const y = selY, inY = p => +p.date.slice(0, 4) === y, ly = live().filter(inY), zy = zel().filter(inY), tot = sum(ly) - sum(zy);
-  const i = yrs.indexOf(y), arrow = (id, on, t, lab) => on ? `<button class="ya" id="${id}" type="button" aria-label="${lab}">${t}</button>` : '';
-  $('#ptl').innerHTML = arrow('pyp', i > 0, '\u2039', 'Previous year') + 'Paid in ' + y + arrow('pyn', i < yrs.length - 1, '\u203a', 'Next year');
+  $('#ptl').textContent = 'Paid in ' + y;
   $('#ptotal').textContent = nf(Math.abs(tot)); $('#ptotal').classList.toggle('zg', tot < -0.004);
   /* average over whole months: from the first month with a payment to last month (this month is still going) */
   const used = ly.concat(zy).map(p => +p.date.slice(5, 7) - 1);
@@ -2102,7 +2118,7 @@ function refreshYear() {
 }
 
 const keysSel = id => selC[id] || CKf();
-let cardView = 'month', selCY = {};
+let cardView = 'month', selCY = {}, selCM = {};   /* selCM: a month picked inside Year view (list shows just that month) */
 /* the card page: Month shows one month (bars by month), Year shows the year (twelve bars); both net of Zelle in */
 function drawCardChart(id) {
   const all = live().filter(p => p.card === id), zc = zel().filter(p => p.card === id), both = all.concat(zc);
@@ -2111,9 +2127,8 @@ function drawCardChart(id) {
   if (cardView === 'year') {
     const yrs = Array.from(new Set(both.map(p => +p.date.slice(0, 4)).concat([CUR.y]))).sort();
     let y = selCY[id] || CUR.y; if (!yrs.includes(y)) y = CUR.y; selCY[id] = y;
-    const inY = p => +p.date.slice(0, 4) === y, P = all.filter(inY), Z = zc.filter(inY), net = sum(P) - sum(Z), i = yrs.indexOf(y);
-    const arrow = (aid, on, t, lab) => on ? `<button class="ya" id="${aid}" type="button" aria-label="${lab}">${t}</button>` : '';
-    $('#cm1').innerHTML = arrow('cyp', i > 0, '\u2039', 'Previous year') + y + arrow('cyn', i < yrs.length - 1, '\u203a', 'Next year');
+    const inY = p => +p.date.slice(0, 4) === y, P = all.filter(inY), Z = zc.filter(inY), net = sum(P) - sum(Z);
+    $('#cm1').textContent = y;
     $('#cm2').textContent = mf(Math.abs(net)); $('#cm2').classList.toggle('zg', net < -0.004);   /* big number: total after Zelle in */
     $('#cm3').innerHTML = Z.length ? `<div class="zrows"><div><span>Paid</span><b>${mf(sum(P))}</b></div><div><span>Zelle in</span><b class="zg">${mf(sum(Z))}</b></div></div>` : (P.length ? plural(P.length, 'payment') : 'No payments in ' + y);
     const used = P.concat(Z).map(p => +p.date.slice(5, 7) - 1);
@@ -2125,11 +2140,15 @@ function drawCardChart(id) {
     }
     $('#cm4').innerHTML = avg;
     const months = Array.from({ length: 12 }, (_, m) => mk(y, m)), vals = months.map(k => netOf(id, p => inM(p, k))), mx = Math.max(1, ...vals);
+    const pick = months.includes(selCM[id]) ? selCM[id] : null;
     $('#pchart2').hidden = true; const yc = $('#pyear2'); yc.hidden = false;
     yc.innerHTML = months.map((k, m) => {
       const fut = y > CUR.y || (y === CUR.y && m > CUR.m), v = vals[m];
-      return `<button class="yc${v > 0 ? ' has' : ''}${fut ? ' f' : ''}${k === CKf() ? ' now' : ''}" type="button" data-k="${k}"${fut ? ' disabled' : ''} aria-label="${mLong(y, m)}: ${sgn(v)}"><span class="yb">${v > 0 ? `<i style="height:${(v / mx * 120).toFixed(1)}px;background:${cCol(id)}"></i>` : ''}</span><small>${mAbbr(m).charAt(0)}</small></button>`;
+      return `<button class="yc${v > 0 ? ' has' : ''}${fut ? ' f' : ''}${k === CKf() ? ' now' : ''}${k === pick ? ' pick' : ''}" type="button" data-k="${k}"${fut ? ' disabled' : ''} aria-pressed="${k === pick}" aria-label="${mLong(y, m)}: ${sgn(v)}"><span class="yb">${v > 0 ? `<i style="height:${(v / mx * 120).toFixed(1)}px;background:${cCol(id)}"></i>` : ''}</span><small>${mAbbr(m).charAt(0)}</small></button>`;
     }).join('');
+    yc.classList.toggle('picking', !!pick);
+    if (pick) { const [py, pm] = pk(pick); cardList(id, p => inM(p, pick), mLong(py, pm - 1), true); }
+    else cardList(id, inY, String(y));
     return;
   }
   $('#pyear2').hidden = true;
@@ -2139,25 +2158,35 @@ function drawCardChart(id) {
   $('#cm1').textContent = mLong(y, m - 1); $('#cm2').textContent = mf(Math.abs(net)); $('#cm2').classList.toggle('zg', net < -0.004);
   $('#cm3').innerHTML = Z.length ? `<div class="zrows"><div><span>Paid</span><b>${mf(sum(P))}</b></div><div><span>Zelle in</span><b class="zg">${mf(sum(Z))}</b></div></div>` : (sel === CKf() ? 'Paid this month' : 'Paid that month');
   $('#cm4').textContent = P.length ? 'Last paid ' + dShort(P[0].date) : (sel === CKf() ? 'No payments this month' : 'No payments that month');
+  cardList(id, p => inM(p, sel), new Date(y, m - 1, 1).toLocaleDateString('en-US', y === CUR.y ? { month: 'long' } : { month: 'long', year: 'numeric' }));
+}
+/* the card's payment list, only for the month or year on screen (Zelle in shown in green) */
+function cardList(id, pred, label, all) {
+  const rows = live().concat(zel()).filter(p => p.card === id && pred(p)).sort(byDate);
+  const dtile = d => { const x = pd(d); return `<div class="dt"><b>${x.getDate()}</b><s>${mAbbr(x.getMonth())}</s></div>`; };
+  $('#cpsec').innerHTML = 'Payments \u00b7 ' + esc(label) + (all ? `<button class="lk" id="cpall" type="button">Show all of ${esc(label.slice(-4))}</button>` : '');
+  $('#cplist').innerHTML = rows.length ? rows.map(p => `<div class="mr" data-id="${esc(p.id)}" role="button" tabindex="0">${dtile(p.date)}<div class="pl"><b${p.z ? ' class="zg"' : ''}>${mf(p.amt)}</b><small>${p.z ? 'Zelle in \u00b7 ' : ''}${dFull(p.date)}</small></div>${svg(IC.right, 16)}</div>`).join('')
+    : `<div class="empty" style="padding:16px 0">No payments in ${esc(label)}.</div>`;
 }
 function openPayDetail(id) {
   const c = S.cards.find(x => x.id === id);
   if (!c) { closePayDetail(); return; }
   curPay = id;
-  const all = live().filter(p => p.card === id).concat(zel().filter(p => p.card === id)).sort(byDate);
   const thumb = c.photo ? `<img class="thb" src="${c.photo}" alt="">` : `<div class="thb gen-bg" style="aspect-ratio:1.586"></div>`;
-  const dtile = d => { const x = pd(d); return `<div class="dt"><b>${x.getDate()}</b><s>${mAbbr(x.getMonth())}</s></div>`; };
   $('#pdbody').innerHTML = `<div class="nav"><button class="lk" id="pdb">${svg(IC.back)}Payments</button></div><div class="pdh">${thumb}<h1 class="vt vt2">${esc(lbl(c))}</h1></div>
   <div class="n-card still n-sum"><div class="pdm"><div class="pdtop"><div class="pm1" id="cm1"></div><div class="pmode" id="pmode2" role="radiogroup" aria-label="Show"><button type="button" role="radio" data-v="month">Month</button><button type="button" role="radio" data-v="year">Year</button></div></div><div class="pm2" id="cm2"></div><div class="pm3" id="cm3"></div><div class="pm4" id="cm4"></div></div>
   <div class="cw" id="pchart2"></div><div class="y12" id="pyear2" hidden></div></div>
-  <div class="sec" style="margin-top:6px">Payments</div>
-  <div class="lcard">${all.length ? all.slice(0, 60).map(p => `<div class="mr" data-id="${esc(p.id)}" role="button" tabindex="0">${dtile(p.date)}<div class="pl"><b${p.z ? ' class="zg"' : ''}>${mf(p.amt)}</b><small>${p.z ? 'Zelle in \u00b7 ' : ''}${dFull(p.date)}</small></div>${svg(IC.right, 16)}</div>`).join('') : '<div class="empty" style="padding:16px 0">No payments yet. Tap + to add one.</div>'}</div>`;
+  <div class="sec" style="margin-top:6px" id="cpsec">Payments</div>
+  <div class="lcard" id="cplist"></div>`;
   $('#pdb').onclick = closePayDetail;
-  $('#pdbody').querySelectorAll('.mr').forEach(r => r.onclick = () => openPayForm(S.payments.find(p => p.id === r.dataset.id)));
+  $('#cplist').onclick = e => { const r = e.target.closest('.mr'); if (r) openPayForm(S.payments.find(p => p.id === r.dataset.id)); };
   $('#pchart2').onclick = e => { const col = e.target.closest('.col'); if (col) { selC[id] = col.dataset.k; drawCardChart(id); } };
-  $('#pyear2').onclick = e => { const b = e.target.closest('.yc'); if (!b || b.disabled) return; cardView = 'month'; selC[id] = b.dataset.k; drawCardChart(id); centerSel($('#pchart2')); };
-  $('#pmode2').onclick = e => { const b = e.target.closest('button'); if (!b || b.dataset.v === cardView) return; cardView = b.dataset.v; if (cardView === 'year') selCY[id] = pk(keysSel(id))[0]; drawCardChart(id); if (cardView === 'month') centerSel($('#pchart2')); };
-  $('#cm1').onclick = e => { const a = e.target.closest('.ya'); if (!a) return; selCY[id] = (selCY[id] || CUR.y) + (a.id === 'cyn' ? 1 : -1); drawCardChart(id); };
+  $('#pyear2').onclick = e => { const b = e.target.closest('.yc'); if (!b || b.disabled) return; selCM[id] = selCM[id] === b.dataset.k ? null : b.dataset.k; drawCardChart(id); };
+  $('#cpsec').onclick = e => { if (e.target.closest('#cpall')) { selCM[id] = null; drawCardChart(id); } };
+  $('#pmode2').onclick = e => { const b = e.target.closest('button'); if (!b || b.dataset.v === cardView) return; cardView = b.dataset.v; if (cardView === 'year') { selCY[id] = pk(keysSel(id))[0]; selCM[id] = null; } else { selC[id] = CKf(); selCM[id] = null; } drawCardChart(id);   /* Month always starts on the current month */ if (cardView === 'month') centerSel($('#pchart2')); };
+  yearMenu($('#pmode2 [data-v=year]'), () => Array.from(new Set(live().concat(zel()).filter(p => p.card === id).map(p => +p.date.slice(0, 4)).concat([CUR.y]))).sort((a, b) => b - a),
+    () => cardView === 'year' ? selCY[id] || CUR.y : null, y => netOf(id, p => +p.date.slice(0, 4) === y),
+    y => { cardView = 'year'; selCY[id] = y; selCM[id] = null; drawCardChart(id); });
   drawCardChart(id); $('#pdetail').classList.add('on');
 }
 function closePayDetail() { curPay = null; $('#pdetail').classList.remove('on'); }
@@ -2205,17 +2234,37 @@ function openPayForm(p, presel) {
   });
 }
 
+/* the Year button: from Month it switches to Year; tapped again while on Year it opens a list of years */
+function yearMenu(btn, years, cur, total, pick) {
+  btn.setAttribute('aria-haspopup', 'menu');
+  btn.addEventListener('click', e => {
+    if (cur() === null) return;   /* not on Year yet: the normal switch handles it */
+    e.stopImmediatePropagation(); e.preventDefault();
+    if (document.getElementById('ymenu')) { closeYearMenu(); return; }
+    const r = btn.getBoundingClientRect(), m = document.createElement('div'), c = cur();
+    m.id = 'ymenu'; m.setAttribute('role', 'menu');
+    m.innerHTML = '<div class="ymh">Jump to a year</div>' + years().map(y => { const v = total(y); return `<button type="button" role="menuitemradio" aria-checked="${y === c}" data-y="${y}"${y === c ? ' class="on"' : ''}><span>${y}</span><em${v < -0.004 ? ' class="zg"' : ''}>${mf(Math.abs(v))}</em></button>`; }).join('');
+    const sc = document.createElement('div'); sc.id = 'ymscrim'; sc.onclick = closeYearMenu;
+    document.body.append(sc, m);
+    m.style.top = (r.bottom + 8) + 'px'; m.style.right = Math.max(12, innerWidth - r.right) + 'px';
+    m.onclick = ev => { const b = ev.target.closest('button'); if (!b) return; closeYearMenu(); pick(+b.dataset.y); };
+  }, true);
+}
+function closeYearMenu() { ['ymenu', 'ymscrim'].forEach(i => { const e = document.getElementById(i); if (e) e.remove(); }); }
+
 function bindPayments() {
   $('#pchart').onclick = e => { const col = e.target.closest('.col'); if (col) { selA = col.dataset.k; refreshPay(); } };
-  $('#plist').onclick = e => { const r = e.target.closest('.pr'); if (!r) return; const id = r.dataset.id; cardView = payView; if (payView === 'year') selCY[id] = selY; else selC[id] = selA; openPayDetail(id); };
+  $('#plist').onclick = e => { const r = e.target.closest('.pr'); if (!r) return; const id = r.dataset.id; cardView = payView; selCM[id] = null; if (payView === 'year') selCY[id] = selY; else selC[id] = selA; openPayDetail(id); };
   $('#plist').onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { const r = e.target.closest('.pr'); if (r) { e.preventDefault(); r.click(); } } };
   $('#pmode').onclick = e => {
     const b = e.target.closest('button'); if (!b || b.dataset.v === payView) return;
-    payView = b.dataset.v; if (payView === 'year') selY = pk(selA)[0];
+    payView = b.dataset.v; if (payView === 'year') selY = pk(selA)[0]; else selA = CKf();   /* Month always starts on the current month */
     refreshPay(); if (payView === 'month') centerSel($('#pchart'));
   };
   $('#pyear').onclick = e => { const c = e.target.closest('.yc'); if (!c || c.disabled) return; payView = 'month'; selA = c.dataset.k; refreshPay(); centerSel($('#pchart')); };
-  $('#ptl').onclick = e => { const a = e.target.closest('.ya'); if (!a) return; const yrs = payYears(); selY = yrs[yrs.indexOf(selY) + (a.id === 'pyn' ? 1 : -1)] || selY; refreshPay(); };
+  yearMenu($('#pmode [data-v=year]'), () => payYears().slice().reverse(), () => payView === 'year' ? selY : null,
+    y => { const inY = p => +p.date.slice(0, 4) === y; return sum(live().filter(inY)) - sum(zel().filter(inY)); },
+    y => { payView = 'year'; selY = y; refreshPay(); });
   $('#pback').onclick = () => { selA = CKf(); refreshPay(); };
 }
 
