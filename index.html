@@ -48,15 +48,15 @@ input,textarea{user-select:text;-webkit-user-select:text;width:100%;background:v
 .n-tile{text-align:left;background:var(--p1);border:1px solid var(--line);padding:14px;cursor:pointer;border-radius:22px}.n-tile small{display:block;font-size:11px;color:var(--sub);margin-bottom:4px}.n-tile b{font-size:18px;color:var(--tx);font-weight:500}
 .n-donut{position:relative;flex-shrink:0;width:112px;height:112px}.n-donut svg{display:block;transform:rotate(-90deg);width:100%;height:100%}
 .n-dc{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}.n-dc b{font-size:22px;color:var(--tx);font-weight:500}.n-dc small{font-size:11px;color:var(--sub)}
-.n-mrow{width:100%;display:flex;align-items:center;justify-content:space-between;min-height:44px;cursor:pointer;text-align:left;background:rgba(0,200,5,.07);border:1px solid rgba(0,200,5,.35);border-radius:22px;padding:14px 18px;margin-bottom:12px}
-.n-mrow span:first-child{display:flex;align-items:center;gap:12px;font-size:14px;font-weight:500;color:var(--tx2)}.n-mrow i{width:10px;height:10px;border-radius:50%;background:var(--g)}
+.n-mrow{width:100%;display:flex;align-items:center;justify-content:space-between;min-height:44px;cursor:pointer;text-align:left;background:var(--p1);border:1px solid var(--line);border-radius:22px;padding:14px 18px;margin-bottom:12px}
+.n-mrow span:first-child{display:flex;align-items:center;gap:12px;font-size:15px;font-weight:600;color:var(--tx)}.n-mrow i{width:10px;height:10px;border-radius:50%;background:var(--g)}
 .xr{width:100%;display:flex;align-items:center;justify-content:space-between;gap:10px;background:none;border:0;border-bottom:1px solid var(--line);text-align:left;cursor:pointer;padding:13px 0;min-height:52px}
 .xr .xl{display:flex;align-items:flex-start;gap:12px;min-width:0;flex:1}.xr .xd{width:10px;height:10px;border-radius:50%;margin-top:5px;flex-shrink:0}
 .xr b{display:flex;align-items:center;font-size:15px;font-weight:600;color:var(--tx)}.xr b span.t{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .xr small{display:block;font-size:12px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-style:normal;color:var(--mut)}
 .xr .xt{min-width:0}
 .xa{font:600 14px ui-monospace,Menlo,monospace;flex-shrink:0;font-weight:600;font-size:15px;line-height:1.2;font-family:inherit;color:var(--tx);background:none;border-radius:0;padding:0}
-.xr.off{opacity:.5}.badge{font-size:9px;padding:2px 6px;border-radius:4px;background:var(--line);color:var(--tx3);text-transform:uppercase;letter-spacing:.05em;margin-left:8px;flex-shrink:0}
+.xr.off{opacity:.5}.badge{font-size:12px;font-weight:600;color:var(--sub);margin-left:8px;flex-shrink:0}
 .xr .chev{color:var(--sub);transition:transform .2s;display:none}.xr .chev.up{transform:rotate(180deg)}
 .xs{display:flex;flex-direction:column;gap:6px;border-bottom:1px solid var(--line);padding:0 0 14px 22px}
 .si{display:flex;align-items:center;justify-content:space-between;background:var(--p0b);border-radius:10px;padding:6px 6px 6px 12px;font-size:14px;min-height:44px;gap:8px}.si span:first-child{color:var(--tx3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -424,11 +424,6 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .es-top .n-big{margin:4px 0 0}
 .n-donut.es-wheel{width:96px;height:96px}
 .es-wheel .n-dc b{font-size:18px;font-weight:600;line-height:1}.es-wheel .n-dc small{font-size:9.5px;margin-top:2px}
-.es-leg{display:grid;grid-auto-flow:column;grid-template-rows:repeat(var(--r,1),auto);grid-template-columns:1fr 1fr;gap:8px 22px;margin-top:14px}
-.es-leg div{display:flex;align-items:center;gap:8px;min-width:0;font-size:13.5px;color:var(--sub)}
-.es-leg i{width:8px;height:8px;border-radius:50%;flex:none}
-.es-leg span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.es-leg em{font-style:normal;color:var(--mut);font-variant-numeric:tabular-nums}
 
 /* Customize Home: hide or show a card */
 .ed-row .vis{width:40px;height:48px;border:0;background:none;color:var(--sub);display:flex;align-items:center;justify-content:center;padding:0;border-radius:12px;cursor:pointer;flex-shrink:0}
@@ -548,7 +543,6 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
       <div><div class="lbl" style="margin:0">Total monthly expenses</div><div class="n-big"><i>$</i><b id="eTotal">0.00</b></div></div>
       <div class="n-donut es-wheel" id="eDonut"></div>
     </div>
-    <div class="es-leg" id="eLeg"></div>
   </div>
   <button class="n-mrow" type="button" id="eMaaBtn"><span><i></i>Maaser</span><span class="xa" id="eMaa">$0.00</span></button>
   <div class="hh"><span class="sec">By expense</span></div>
@@ -1275,7 +1269,8 @@ function bindHomeEdit() {
 /* =====================================================================
    Expenses tab + Maaser
    ===================================================================== */
-const EXP_COLORS = ['#00c805', '#ff5000', '#ffb700', '#0094ff', '#9d4edd', '#e63946', '#00f5d4', '#ff007f'];
+/* softer tones that sit with the card colors */
+const EXP_COLORS = ['#2e9e3a', '#e0603a', '#d9a43a', '#2a7fb8', '#a78bfa', '#d9545f', '#3fb8a8', '#d0559a'];
 const SUBS_ID = 'subscriptions';
 let subsOpen = false;
 
@@ -1292,11 +1287,11 @@ function ensureSubs() {
 
 function donutHtml(act, total) {
   const r = 60, C = 2 * Math.PI * r;
-  let cum = 0, c = `<circle cx="80" cy="80" r="${r}" fill="none" style="stroke:var(--p2)" stroke-width="24"/>`;
+  let cum = 0, c = `<circle cx="80" cy="80" r="${r}" fill="none" style="stroke:var(--p2)" stroke-width="16"/>`;
   act.forEach((e, i) => {
     const len = e.amount / total * C;
     const L = Math.max(len - (act.length > 1 ? 2 : 0), 0.5);
-    c += `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${EXP_COLORS[i % EXP_COLORS.length]}" stroke-width="24" stroke-dasharray="${L.toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-cum).toFixed(2)}"/>`;
+    c += `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${EXP_COLORS[i % EXP_COLORS.length]}" stroke-width="16" stroke-dasharray="${L.toFixed(2)} ${C.toFixed(2)}" stroke-dashoffset="${(-cum).toFixed(2)}"/>`;
     cum += len;
   });
   return c;
@@ -1307,38 +1302,34 @@ function renderExpenses(skipList) {
   $('#eTotal').textContent = nf(total);
   $('#eMaa').textContent = mf(S.maaser.amount);
 
-  /* expense wheel: one slice per active expense, legend with each share */
+  /* expense wheel: one slice per active expense (each share is shown in the list below) */
   const label = act.length ? 'Expense wheel. ' + act.slice(0, 3).map(e => e.desc + ' ' + Math.round(e.amount / total * 100) + ' percent').join(', ') : 'Expense wheel. No expenses yet.';
-  $('#eDonut').innerHTML = `<svg viewBox="0 0 160 160" width="128" height="128" role="img" aria-label="${esc(label)}">${act.length ? donutHtml(act, total) : '<circle cx="80" cy="80" r="60" fill="none" style="stroke:var(--p2)" stroke-width="24"/>'}</svg>
+  $('#eDonut').innerHTML = `<svg viewBox="0 0 160 160" width="128" height="128" role="img" aria-label="${esc(label)}">${act.length ? donutHtml(act, total) : '<circle cx="80" cy="80" r="60" fill="none" style="stroke:var(--p2)" stroke-width="16"/>'}</svg>
     <div class="n-dc"><b>${act.length}</b><small>active</small></div>`;
-  /* legend reads down the columns: biggest four on the left, the rest on the right */
-  $('#eLeg').style.setProperty('--r', Math.max(1, Math.ceil(act.length / 2)));
-  $('#eLeg').innerHTML = act.length
-    ? act.map((e, i) => `<div><i style="background:${EXP_COLORS[i % EXP_COLORS.length]}"></i><span>${esc(e.desc)}</span><em>${Math.round(e.amount / total * 100)}%</em></div>`).join('')
-    : '<div><span style="color:var(--mut)">Awaiting expenses</span></div>';
   if (skipList) return;
   renderExpenseList();
 }
 
 function renderExpenseList() {
   const all = allExpSorted();
-  const colors = {};
-  activeExp().forEach((e, i) => { colors[e.id] = EXP_COLORS[i % EXP_COLORS.length]; });
+  /* each active expense: its wheel color and its share of the total, e.g. "52% of total" */
+  const colors = {}, share = {}, total = totalExp();
+  activeExp().forEach((e, i) => { colors[e.id] = EXP_COLORS[i % EXP_COLORS.length]; share[e.id] = Math.round(e.amount / total * 100) + '%'; });
   const onlyEmptySubs = all.length === 1 && all[0].id === SUBS_ID && !(all[0].subItems || []).length;
   $('#eEmpty').hidden = !onlyEmptySubs;
   $('#eList').innerHTML = all.map(e => {
-    if (e.id === SUBS_ID) return subsRow(e, colors[e.id] || '#9d4edd');
+    if (e.id === SUBS_ID) return subsRow(e, colors[e.id] || EXP_COLORS[4], share[e.id]);
     const off = e.isArchived ? ' off' : '';
     const badge = e.isArchived ? '<span class="badge">Paused</span>' : '';
     const dot = e.isArchived ? '#6b7280' : (colors[e.id] || '#6b7280');
-    const sub = e.note || '';
+    const sub = share[e.id] ? share[e.id] + (e.note ? ' \u00b7 ' + e.note : ' of total') : e.note || '';
     return `<button class="xr${off}" type="button" data-id="${esc(e.id)}"><span class="xl"><i class="xd" style="background:${dot}"></i><span class="xt"><b><span class="t">${esc(e.desc)}</span>${badge}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span></span><span class="xa">${mf(e.amount)}</span></button>`;
   }).join('');
 }
 
-function subsRow(e, color) {
+function subsRow(e, color, pct) {
   const items = (e.subItems || []).slice().sort((a, b) => b.amount - a.amount);
-  const sub = (items.length === 1 ? '1 subscription' : items.length + ' subscriptions');
+  const sub = (pct ? pct + ' \u00b7 ' : '') + (items.length === 1 ? '1 subscription' : items.length + ' subscriptions');
   let h = `<button class="xr" type="button" data-id="${SUBS_ID}" aria-expanded="${subsOpen}"><span class="xl"><i class="xd" style="background:${items.length ? color : '#6b7280'}"></i><span class="xt"><b><span class="t">Subscriptions</span></b><small>${sub}</small></span></span><span style="display:flex;align-items:center;gap:8px"><span class="xa">${mf(e.amount)}</span><span class="chev${subsOpen ? ' up' : ''}">${svg(IC.down, 16)}</span></span></button>`;
   if (subsOpen) {
     h += `<div class="xs">${items.length ? items.map(s => `<div class="si"><span>${esc(s.name)}</span><span class="r"><span>${mf(s.amount)}</span><button type="button" class="sub-rm" data-sid="${esc(s.id)}" aria-label="Remove ${esc(s.name)}">${svg(IC.x, 14)}</button></span></div>`).join('') : '<div class="none">No subscriptions yet.</div>'}
