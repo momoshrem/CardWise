@@ -1,0 +1,29 @@
+name: CardWise reminders
+on:
+  schedule:
+    - cron: '7 * * * *'   # every hour; the script only sends once a day, at the time you picked in the app
+  workflow_dispatch:
+    inputs:
+      test:
+        description: 'Send a test notification now'
+        type: boolean
+        default: true
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install --no-save --no-audit --no-fund web-push@3.6.7
+      - run: node .github/reminders.js
+        env:
+          GIST_ID: ${{ secrets.GIST_ID }}
+          GIST_TOKEN: ${{ secrets.GIST_TOKEN }}
+          VAPID_PRIVATE: ${{ secrets.VAPID_PRIVATE }}
+          VAPID_PUBLIC: BHYchbU0ysf5oI_1LBZiLlB8EtRfV04ON0An4yzGxtUQ3YUizrHL0iUftzIv3U7m8lAUy5Kfdtpxdo5YtQFkjWg
+          TEST: ${{ github.event_name == 'workflow_dispatch' && inputs.test }}
