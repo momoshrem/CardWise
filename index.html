@@ -6,7 +6,6 @@
 <title>CardWise</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#0e1e24">
-<script>try{var t=localStorage.getItem('et_theme');if(t==='light'||t==='dark')document.documentElement.dataset.theme=t}catch(e){}</script>
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
 <link rel="apple-touch-icon" sizes="180x180" href="icons/apple-touch-icon.png">
 <meta name="mobile-web-app-capable" content="yes">
@@ -69,7 +68,8 @@ input,textarea{user-select:text;-webkit-user-select:text;width:100%;background:v
 .sub-add button{height:44px;padding:0 14px;border:0;border-radius:10px;background:var(--g);color:#000;font-size:14px;font-weight:600;cursor:pointer}
 
 /* ---------- cards tab (stacked wallet) ---------- */
-#cCount{margin-bottom:12px;font-size:13px;color:var(--sub);font-weight:600;margin:14px 4px 10px}
+/* Cards: one line under the title with the total credit limit and how many cards */
+#cLine{font-size:15px;color:var(--sub);margin:-6px 4px 16px}#cLine b{color:var(--tx);font-weight:600}
 .card{aspect-ratio:1.586;border-radius:16px;padding:14px 16px;position:relative;border-top:.5px solid rgba(255,255,255,.2);transition:transform .15s}
 #cStack{container-type:inline-size}#cStack .card+.card{margin-top:calc(50px - 63.05cqw)}
 .card .nm{font-size:15px;font-weight:500}.card.ph .nm,.card.ph .num{text-shadow:0 1px 3px rgba(0,0,0,.6)}
@@ -118,8 +118,8 @@ input[type=file]{height:auto;padding:9px;font-size:14px;color:var(--sub)}
 .rv{position:absolute;inset:0;border-radius:16px;padding:16px;display:flex;flex-direction:column;justify-content:space-between}.rt{display:flex;justify-content:space-between;align-items:center}
 .card.big.ph .rv .nm{position:static}.rn{font-size:17px;letter-spacing:.1em;margin-bottom:10px;display:flex;align-items:center;gap:8px}.cp{background:none;border:0;color:inherit;opacity:.85;padding:4px;display:flex;cursor:pointer}.ex>div{display:flex;flex-wrap:wrap;align-items:center;gap:2px 6px}.ex small{width:100%;display:block;font-size:10px;opacity:.7}.ex{display:flex;gap:28px;font-family:ui-monospace,Menlo,monospace;font-size:13px}
 #cap{font-size:12px;color:var(--mut);text-align:center;margin:-8px 0 14px}#cap:empty{display:none}
-#cSum{background:var(--p1);border-radius:22px;border:1px solid var(--line);padding:2px 16px;margin-bottom:6px}#cSum:empty{display:none}
-.sr{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:.5px solid var(--line)}.sr:last-child{border:0}.sr .ic{width:34px;height:34px;border-radius:11px}.sr b{display:block;font-size:14px;color:var(--tx);font-weight:500}.sr small{font-size:12px;color:var(--sub)}
+
+
 #pin{z-index:70}.dots{display:flex;justify-content:center;gap:14px;margin:0 0 18px}.dots span{width:14px;height:14px;border-radius:50%;border:1.5px solid var(--mut)}.dots span.f{background:var(--g);border-color:var(--g)}
 .pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;max-width:260px;margin:0 auto}.pad button{background:var(--p2);border:0;border-radius:12px;padding:12px 0;font-size:22px;color:var(--tx);cursor:pointer;min-height:48px}.pad .gh{background:none;font-size:14px;color:var(--sub)}
 input[type=date]::-webkit-date-and-time-value{text-align:left;min-height:1.2em}input[type=date]::-webkit-datetime-edit{padding:0}.two>div{min-width:0}
@@ -243,7 +243,6 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .cpk-prev{background:var(--p2);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:16px}
 .cpk-prev small{display:block;color:var(--mut);font-size:11px;margin-bottom:8px}
 .cpk-btns{display:flex;gap:8px}.cpk-btns .btn{margin-top:0}
-.n-then{font-size:12.5px;color:var(--sub);margin-top:12px;padding-top:10px;border-top:.5px solid var(--line);line-height:1.4}
 
 /* ---------- debit cards and Zelle in ---------- */
 .zseg{display:flex;gap:4px;padding:4px;background:var(--p2);border:.5px solid var(--line);border-radius:14px;margin:8px 0 6px}
@@ -262,12 +261,10 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
   #hList .n-card{padding:16px 18px}
   #hList .n-big{margin:4px 0 12px}#hList .n-big b{font-size:42px}
   #hList .hm-brk{margin-top:12px;gap:9px}
-  #hList .n-then{margin-top:12px;padding-top:10px}
   #hList .n-tile{min-height:0;padding:14px 16px}
   /* Next up a touch more compact */
   #hNext .n-card{padding:14px 18px}
   #hNext .n-big{margin:2px 0 10px}
-  #hNext .n-then{margin-top:10px;padding-top:8px}
 }
 /* iPhone: WhatsApp / App Store sized bar (60pt tall, 21pt side margins, 60pt plus button), 16px above the screen edge */
 @supports (-webkit-touch-callout:none){
@@ -412,20 +409,33 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 #settings .stat{margin:10px 2px 14px}
 
 /* Next up: countdown ring in the card's chart color, details beside it */
-.nr{display:flex;align-items:center;gap:16px}
-.nr-ring{position:relative;width:92px;height:92px;flex:none}.nr-ring svg{display:block;transform:rotate(-90deg)}
+.nr{display:flex;align-items:center;gap:22px}
+.nr-ring{position:relative;width:124px;height:124px;flex:none}.nr-ring svg{display:block;transform:rotate(-90deg)}
 .nr-mid{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-.nr-mid b{font-size:30px;font-weight:600;color:var(--tx);line-height:1}.nr-mid b.t{font-size:19px}.nr-mid span{font-size:12px;color:var(--sub);margin-top:2px}
+.nr-mid b{font-size:40px;font-weight:600;color:var(--tx);line-height:1}.nr-mid b.t{font-size:26px}.nr-mid span{font-size:14px;color:var(--sub);margin-top:3px}
 .nr-txt{flex:1;min-width:0}
-.nr-head{margin-bottom:12px}
-.nr-ttl{font-size:17px;font-weight:600;color:var(--tx);line-height:1.2}
-.nr-list{display:flex;flex-direction:column;gap:3px;margin-top:6px}
-.nr-list div{display:flex;align-items:center;gap:7px;min-width:0;font-size:14px;color:var(--tx3)}
-.nr-list i{width:9px;height:9px;border-radius:3px;flex:none}
-.nr-list s{text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
-.nr-list .n-tag{font-size:11px;font-weight:600;letter-spacing:0;flex:none}
-#hNext .n-next .n-then{margin-top:12px;padding-top:9px}
-.nr-then{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nr-head{margin-bottom:16px}
+.nr-ttl{font-size:21px;font-weight:600;color:var(--tx);line-height:1.25}
+.nr-gh{font-size:12.5px;font-weight:600}.nr-gh.p{color:var(--amb)}.nr-gh.s{color:var(--blue)}
+.nr-gh+.nr-list{margin-top:3px}.nr-list+.nr-gh{margin-top:12px}
+.nr-list{display:flex;flex-direction:column;gap:4px;margin-top:7px}
+.nr-list div,.nr-soon div{display:flex;align-items:center;gap:8px;min-width:0;font-size:15px;color:var(--tx3)}
+.nr-list i,.nr-soon i{width:9px;height:9px;border-radius:3px;flex:none}
+.nr-list s,.nr-soon s{text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
+.nr-list s{flex:0 1 auto}
+.n-next .n-tag{font-style:normal;font-size:12px;font-weight:600;letter-spacing:0}
+.n-next .amp{font-style:normal;font-size:12px;color:var(--sub)}
+/* the next 3 dates */
+.nr-soon{margin-top:14px;padding-top:6px;border-top:.5px solid var(--line);display:flex;flex-direction:column}
+.nr-soon div{gap:10px;padding:8px 0;font-size:14px;color:var(--tx)}
+.nr-soon b{width:50px;flex:none;font-weight:400;color:var(--sub)}
+.nr-dt{display:flex;flex:none}.nr-dt i+i{margin-left:-3px;box-shadow:0 0 0 1.5px var(--p1)}
+.nr-soon span:last-child{flex:none;white-space:nowrap}
+/* Paid card: dots for the 3 months you can swipe between; the newest is on the right */
+.pdots{display:flex;gap:5px;align-items:center}.pdots i{width:6px;height:6px;border-radius:3px;background:var(--tx);opacity:.22}.pdots i.on{opacity:.85}
+#hPaidBig{touch-action:pan-y}
+.sw-r{animation:swr .22s ease-out}.sw-l{animation:swl .22s ease-out}
+@keyframes swr{from{opacity:0;transform:translateX(-18px)}}@keyframes swl{from{opacity:0;transform:translateX(18px)}}
 
 /* Expenses total: amount on the left, small wheel on the right, two-column legend below */
 .es-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
@@ -437,20 +447,6 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .es-leg i{width:8px;height:8px;border-radius:50%;flex:none}
 .es-leg span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .es-leg em{font-style:normal;color:var(--mut);font-variant-numeric:tabular-nums}
-
-/* ---------- Display: Dim is the default above; Dark is true black; Light is a light theme ---------- */
-:root[data-theme=dark]{--bg:#000;--p1:#0e0f11;--p2:#17181b;--line:#202226;--p0:#09090b;--p0b:#08080a;--grab:#2c2f34;--track:#1b1d21;--segon:#232529;--sel:rgba(255,255,255,.05)}
-:root[data-theme=light]{color-scheme:light;--bg:#f2f4f6;--p1:#fff;--p2:#eef1f4;--line:#e3e7eb;--mut:#6b7280;--sub:#4b5563;--g:#14a83b;--amb:#b97400;--blue:#0a6fd1;--org:#d94a0a;
-  --tx:#0f172a;--tx2:#1f2937;--tx3:#374151;--p0:#f4f6f8;--p0b:#f4f6f8;--grab:#c7cdd3;--hi:#0f9d35;--track:#e5e9ed;--tabtx:rgba(15,23,42,.88);--glass:rgba(255,255,255,.6);--sel:rgba(15,23,42,.05);--segon:#fff;--scrim:rgba(15,23,42,.35)}
-:root[data-theme=light] .n-card,:root[data-theme=light] .n-tile,:root[data-theme=light] .lcard,:root[data-theme=light] .panel{box-shadow:0 1px 2px rgba(15,23,42,.05)}
-:root[data-theme=light] .zseg button.on{box-shadow:0 1px 2px rgba(15,23,42,.12)}
-:root[data-theme=light] .n-pm.m{background:#fdeeee;border-color:#f5c7c7;color:#b42318}
-:root[data-theme=light] .n-pm.p{background:#e9f7ee;border-color:#b9e3c6;color:#127a32}
-:root[data-theme=light] .upb{border-color:#c5ccd3}
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root[data-theme=light] #tabsIn{background:rgba(255,255,255,.96)}:root[data-theme=dark] #tabsIn{background:rgba(23,24,27,.96)}}
-@media (prefers-reduced-transparency:reduce){:root[data-theme=light] #tabsIn{background:rgba(255,255,255,.97)}:root[data-theme=dark] #tabsIn{background:rgba(23,24,27,.97)}}
-:root[data-theme=light] #fab{background:radial-gradient(120% 90% at 28% 8%,rgba(255,255,255,.32),rgba(255,255,255,0) 50%),#16a34a;-webkit-backdrop-filter:none;backdrop-filter:none;box-shadow:0 8px 20px rgba(22,163,74,.3)}
-:root[data-theme=light] .tb,:root[data-theme=light] .lci{filter:none}
 
 /* Customize Home: hide or show a card */
 .ed-row .vis{width:40px;height:48px;border:0;background:none;color:var(--sub);display:flex;align-items:center;justify-content:center;padding:0;border-radius:12px;cursor:pointer;flex-shrink:0}
@@ -542,7 +538,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
     </div>
 
     <button class="n-card hl" type="button" data-k="paid" data-go="pay" id="hPaidBig">
-      <div class="n-row"><span class="lbl" style="margin:0" id="hPaidLB">Paid so far</span><span class="chev"></span></div>
+      <div class="n-row"><span class="lbl" style="margin:0" id="hPaidLB">Paid so far</span><span class="pdots" id="hPaidDots" aria-hidden="true"></span></div>
       <div class="n-big" id="hPaidBV"><b>&mdash;</b></div>
       <div class="n-bar" id="hPaidBar"></div>
       <div class="hm-brk" id="hPaidBrk"></div>
@@ -585,13 +581,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 <!-- ===================== CARDS ===================== -->
 <div id="vCards" class="view" hidden>
   <div class="top"><h1 class="vt">Cards</h1><button class="av hav" type="button" aria-label="Open settings"><b></b></button></div>
-  <div class="n-card still n-sum">
-    <div class="lbl" style="margin:0">Total credit limit</div>
-    <div class="n-big"><i>$</i><b id="cTotal">0</b></div>
-    <div class="n-sg" id="cBar"></div>
-  </div>
-  <div id="cSum"></div>
-  <div id="cCount"></div>
+  <div id="cLine"></div>
   <div id="cStack"></div>
 </div>
 
@@ -634,16 +624,8 @@ const LS = {
   set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} },
   del(k) { try { localStorage.removeItem(k); } catch (e) {} }
 };
-/* Display: Light, Dark or Dim (the default). Kept on this device only, like the iPhone's own setting. */
-const THEMES = { light: '#f2f4f6', dark: '#000000', dim: '#0e1e24' };
-function applyTheme(t) {
-  t = THEMES[t] ? t : 'dim';
-  document.documentElement.dataset.theme = t;
-  const m = document.querySelector('meta[name="theme-color"]'); if (m) m.content = THEMES[t];
-  return t;
-}
-const themeNow = () => applyTheme(LS.get('et_theme'));
-themeNow();
+/* the app has one look (Dim); an old Light/Dark choice saved on this device is cleared */
+try { localStorage.removeItem('et_theme'); } catch (e) {}
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 const uid = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'i' + Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
 const nowTs = () => Date.now();
@@ -1054,14 +1036,17 @@ function nextUpInfo() {
     if (stmt && date > stmt) frac = Math.max(0, Math.min(1, (today() - stmt) / (date - stmt)));
     else stmt = null;
   }
-  /* the next day with something happening after this one */
-  const rest = ev.filter(e => +e.d > +date);
-  let then = null;
-  if (rest.length) {
-    const m2 = +rest[0].d, at = rest.filter(e => +e.d === m2);
-    then = { d: new Date(m2), p: at.filter(e => e.k === 'p').map(e => e.c), s: at.filter(e => e.k === 's').map(e => e.c) };
-  }
-  return { kind, group, other, date, days, stmt, frac, then };
+  /* what's coming after it: one line per date and type, a card with both on one day gets one line; the next 3 */
+  const lines = [];
+  ev.filter(e => +e.d > +date).forEach(e => {
+    let l = lines.find(x => +x.d === +e.d && x.k === e.k);
+    if (!l) lines.push(l = { d: e.d, k: e.k, cards: [] });
+    l.cards.push(e.c);
+  });
+  const ids = l => l.cards.map(c => c.id).join();
+  const soon = [];
+  lines.forEach(l => { const o = soon.find(x => +x.d === +l.d && x.k !== l.k && ids(x) === ids(l)); if (o) o.k = 'b'; else soon.push(l); });
+  return { kind, group, other, date, days, stmt, frac, soon: soon.slice(0, 3) };
 }
 
 function renderNextUp() {
@@ -1073,11 +1058,11 @@ function renderNextUp() {
       <div class="n-none">${S.cards.length ? 'Add a payment due day or statement day to a card to see a countdown here.' : 'Add a card to see when your next payment is due.'}</div></button>`;
     return;
   }
-  const { kind, group, other, date, days, frac, then } = info;
+  const { kind, group, other, date, days, frac, soon } = info;
   const many = group.length > 1, st = kind === 's', both = other.length > 0;
-  /* title: "Payment due", "Statements close", or "Payment & statement" when both fall on the same day */
-  const title = both ? `${many ? 'Payments' : 'Payment'} &amp; ${other.length > 1 ? 'statements' : 'statement'}`
-    : st ? (many ? 'Statements close' : 'Statement closes') : (many ? 'Payments due' : 'Payment due');
+  /* title: "Payment due" or "Statements close"; when both fall on the same day each type gets its own small heading */
+  const pT = many ? 'Payments due' : 'Payment due', sT = n => n > 1 ? 'Statements close' : 'Statement closes';
+  const title = st ? sT(group.length) : pT;
   /* ring: one section per card in its chart color; it fills from the last statement to the date */
   const ringCards = group.concat(other.filter(c => !group.includes(c)));
   const R = 40, C = 2 * Math.PI * R, n = ringCards.length, gap = n > 1 ? 5 : 0;
@@ -1089,26 +1074,25 @@ function renderNextUp() {
     off += seg;
   });
   const mid = days === 0 ? '<b class="t">Today</b>' : `<b>${days}</b><span>${days === 1 ? 'day' : 'days'}</span>`;
-  const row = (c, tag) => `<div><i style="background:${esc(cCol(c.id))}"></i><s>${esc(lbl(c))}</s>${tag ? `<em class="n-tag ${tag === 'Payment' ? 'p' : 's'}">${tag}</em>` : ''}</div>`;
-  const list = both ? group.map(c => row(c, 'Payment')).join('') + other.map(c => row(c, 'Statement')).join('') : group.map(c => row(c)).join('');
-  /* "Then Nov 10 \u00b7 Chase, Amex statements close": short card names, one line */
-  let thenTxt = '';
-  if (then) {
-    const parts = [];
-    if (then.p.length) parts.push(`${shortNames(then.p)} ${then.p.length > 1 ? 'payments due' : 'payment due'}`);
-    if (then.s.length) parts.push(`${shortNames(then.s)} ${then.s.length > 1 ? 'statements close' : 'statement closes'}`);
-    thenTxt = `<div class="n-then nr-then">Then ${esc(short(then.d))} \u00b7 ${parts.join(' \u00b7 ')}</div>`;
-  }
-  const names = a => a.map(c => esc(lbl(c))).join(', ');
+  const dot = c => `<i style="background:${esc(cCol(c.id))}"></i>`;
+  const tag = k => k === 'b' ? '<em class="n-tag p">Payment</em> <em class="amp">&amp;</em> <em class="n-tag s">Statement</em>'
+    : `<em class="n-tag ${k}">${k === 'p' ? 'Payment' : 'Statement'}</em>`;
+  /* the cards beside the ring; a payment and a statement on the same day are grouped under a yellow and a blue heading */
+  const names = a => `<div class="nr-list">${a.map(c => `<div>${dot(c)}<s>${esc(lbl(c))}</s></div>`).join('')}</div>`;
+  const side = both ? `<div class="nr-gh p">${pT}</div>${names(group)}<div class="nr-gh s">${sT(other.length)}</div>${names(other)}`
+    : `<div class="nr-ttl">${title}</div>${names(group)}`;
+  /* the next 3 dates: date, card colors, names, and a Payment / Statement tag */
+  const soonTxt = soon.length ? `<div class="nr-soon">${soon.map(l => `<div><b>${esc(short(l.d))}</b><span class="nr-dt">${l.cards.map(dot).join('')}</span><s>${l.cards.length > 1 ? shortNames(l.cards) : esc(lbl(l.cards[0]))}</s><span>${tag(l.k)}</span></div>`).join('')}</div>` : '';
+  const named = a => a.map(c => esc(lbl(c))).join(', ');
   const what = both ? 'payment due and statement closes' : st ? 'statement closes' : 'payment due';
   const when = days === 0 ? 'today' : `in ${days} ${days === 1 ? 'day' : 'days'}`;
-  host.innerHTML = `<button class="n-card n-next${st ? ' st' : ''}${days <= 3 ? ' urgent' : ''}" type="button" data-go="cards" aria-label="Next ${what} ${when}, ${esc(weekdayDate(date))}: ${names(both ? group.concat(other) : group)}. Open Cards">
+  host.innerHTML = `<button class="n-card n-next${st ? ' st' : ''}${days <= 3 ? ' urgent' : ''}" type="button" data-go="cards" aria-label="Next ${what} ${when}, ${esc(weekdayDate(date))}: ${named(both ? group.concat(other) : group)}. Open Cards">
     <div class="n-row nr-head"><span class="lbl" style="margin:0">Next up</span><span class="n-date">${esc(weekdayDate(date))}</span></div>
     <div class="nr">
-      <div class="nr-ring" aria-hidden="true"><svg width="92" height="92" viewBox="0 0 92 92"><circle cx="46" cy="46" r="${R}" fill="none" style="stroke:var(--track)" stroke-width="9"/>${arcs}</svg><div class="nr-mid">${mid}</div></div>
-      <div class="nr-txt"><div class="nr-ttl">${title}</div><div class="nr-list">${list}</div></div>
+      <div class="nr-ring" aria-hidden="true"><svg width="124" height="124" viewBox="0 0 92 92"><circle cx="46" cy="46" r="${R}" fill="none" style="stroke:var(--track)" stroke-width="9"/>${arcs}</svg><div class="nr-mid">${mid}</div></div>
+      <div class="nr-txt">${side}</div>
     </div>
-    ${thenTxt}</button>`;
+    ${soonTxt}</button>`;
 }
 
 /* first word of a card's name ("Chase" for Chase Freedom Unlimited), unless another card starts with the same word */
@@ -1168,19 +1152,7 @@ function renderHome() {
   $('#sNext').textContent = ni ? (ni.days === 0 ? 'Today' : plural(ni.days, 'day')) : '\u2014';
   $('#sNext').className = ni ? (ni.kind === 's' && !ni.other.length ? 'blu' : 'amb') : '';
 
-  /* large Paid card: split by card */
-  $('#hPaidLB').textContent = pi ? pi.label : 'Paid so far';
-  if (!pi) {
-    $('#hPaidBV').innerHTML = '<b>\u2014</b>';
-    $('#hPaidBar').innerHTML = '';
-    $('#hPaidBrk').innerHTML = '<div class="n-none">No payments yet. Add one in the Payments tab.</div>';
-  } else {
-    $('#hPaidBV').innerHTML = '<i>$</i><b' + (pi.total < -0.004 ? ' class="zg"' : '') + '>' + nf(Math.abs(pi.total)) + '</b>';
-    const pos = pi.rows.filter(r => r.net > 0), base = pos.reduce((t, r) => t + r.net, 0);
-    $('#hPaidBar').innerHTML = base > 0 ? splitBar(pos.map(r => ({ color: r.color, val: r.net })), base) : '';
-    $('#hPaidBrk').innerHTML = pi.rows.map(r => `<div class="r"><i style="background:${cardColor(r.color)}"></i><span>${esc(r.name)}</span><em>${r.net > 0 && base > 0 ? pctText(r.net / base * 100) : ''}</em><b>${esc(mf(r.val))}</b></div>` +
-      (r.z > 0 ? `<div class="r z"><i></i><span>Zelle in</span><em></em><b>${esc(mf(r.z))}</b></div>` : '')).join('');
-  }
+  paintPaidBig();
 
   /* large Credit limit card: split by card */
   const lrows = S.cards.filter(c => +c.limit > 0).map(c => ({ name: lbl(c), color: cCol(c.id), val: +c.limit }));
@@ -1191,14 +1163,49 @@ function renderHome() {
   homeLayout();
 }
 
-/* the latest month that has a payment, with the amount split by card */
-function paidInfo() {
+/* large Paid card: the total after Zelle and a bar split by card. Swipe right for the month before (2 back at most),
+   left to come forward; tapping it opens Payments. It goes back to the latest month whenever the app is reopened. */
+const PAID_BACK = 2;
+let paidOff = 0;
+function paintPaidBig(dir) {
+  const pi = paidInfo(paidOff);
+  $('#hPaidLB').textContent = pi ? pi.label : 'Paid so far';
+  $('#hPaidDots').innerHTML = pi ? Array.from({ length: PAID_BACK + 1 }, (_, i) => `<i${PAID_BACK - i === paidOff ? ' class="on"' : ''}></i>`).join('') : '';
+  $('#hPaidBrk').innerHTML = pi ? '' : '<div class="n-none">No payments yet. Add one in the Payments tab.</div>';
+  if (!pi) { $('#hPaidBV').innerHTML = '<b>\u2014</b>'; $('#hPaidBar').innerHTML = ''; return; }
+  $('#hPaidBV').innerHTML = '<i>$</i><b' + (pi.total < -0.004 ? ' class="zg"' : '') + '>' + nf(Math.abs(pi.total)) + '</b>';
+  const pos = pi.rows.filter(r => r.net > 0), base = pos.reduce((t, r) => t + r.net, 0);
+  $('#hPaidBar').innerHTML = base > 0 ? splitBar(pos.map(r => ({ color: r.color, val: r.net })), base) : '';
+  if (dir) ['#hPaidBV', '#hPaidBar'].forEach(q => { const el = $(q); el.classList.remove('sw-l', 'sw-r'); void el.offsetWidth; el.classList.add(dir); });
+}
+function bindPaidSwipe() {
+  const el = $('#hPaidBig'); let st = null, swallow = false;
+  el.addEventListener('pointerdown', e => { st = e.button > 0 ? null : { id: e.pointerId, x: e.clientX, y: e.clientY }; });
+  el.addEventListener('pointerup', e => {
+    if (!st || e.pointerId !== st.id) return;
+    const dx = e.clientX - st.x, dy = e.clientY - st.y; st = null;
+    if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    swallow = true; setTimeout(() => { swallow = false; }, 60);
+    const to = Math.max(0, Math.min(PAID_BACK, paidOff + (dx > 0 ? 1 : -1)));
+    if (to === paidOff || !paidInfo(0)) return;
+    paidOff = to; paintPaidBig(dx > 0 ? 'sw-r' : 'sw-l');
+    if (navigator.vibrate) navigator.vibrate(6);
+  });
+  el.addEventListener('pointercancel', () => { st = null; });
+  el.addEventListener('click', e => { if (swallow) { e.stopPropagation(); e.preventDefault(); } }, true);
+  document.addEventListener('visibilitychange', () => { if (document.hidden) paidOff = 0; });
+}
+
+/* the month with the latest payment (or that many months before it), with the amount split by card */
+function paidInfo(back = 0) {
   const pays = live(), zs = zel();
   if (!pays.length && !zs.length) return null;
-  const k = pays.concat(zs).map(p => p.date.slice(0, 7)).sort().pop();
-  const [y, m] = pk(k);
+  const last = pk(pays.concat(zs).map(p => p.date.slice(0, 7)).sort().pop());
+  const d0 = new Date(last[0], last[1] - 1 - back, 1), y = d0.getFullYear(), m = d0.getMonth() + 1;
+  const k = y + '-' + String(m).padStart(2, '0');
   const mp = pays.filter(p => inM(p, k));
-  const label = 'Paid in ' + new Date(y, m - 1, 1).toLocaleDateString('en-US', y === new Date().getFullYear() ? { month: 'long' } : { month: 'long', year: 'numeric' });
+  const now = new Date();
+  const label = y === now.getFullYear() && m === now.getMonth() + 1 ? 'Paid this month' : 'Paid in ' + new Date(y, m - 1, 1).toLocaleDateString('en-US', y === new Date().getFullYear() ? { month: 'long' } : { month: 'long', year: 'numeric' });
   /* each card shows what was paid; its Zelle in is listed under it, and the % and bar use paid minus Zelle in */
   const zm = zs.filter(p => inM(p, k));
   const rows = S.cards.map(c => ({ name: lbl(c), color: cCol(c.id), val: sum(mp.filter(p => p.card === c.id)), z: sum(zm.filter(p => p.card === c.id)) }))
@@ -1492,7 +1499,6 @@ function bindExpenses() {
 /* =====================================================================
    Cards tab (ported from CardWise behavior)
    ===================================================================== */
-const SOON = 3;
 const lbl = c => c.name || (c.last4 ? 'Card ending ' + c.last4 : 'Unnamed card');
 
 function shrink(file) {
@@ -1520,27 +1526,10 @@ function cardEl(c, big) {
 }
 
 /* reminders: statements closing and payments due in the next few days */
-function cardSummary() {
-  const g = {};
-  S.cards.forEach(c => [['s', c.stmtDay], ['d', c.dueDay]].forEach(([t, day]) => {
-    if (!+day) return;
-    const d = nxt(+day), n = daysUntil(d);
-    if (n <= SOON) (g[t + d.getTime()] = g[t + d.getTime()] || { t, d, n, names: [] }).names.push(lbl(c));
-  }));
-  $('#cSum').innerHTML = Object.values(g).sort((a, b) => a.n - b.n).map(x => {
-    const w = x.n === 0 ? 'today' : x.n === 1 ? 'tomorrow' : 'in ' + x.n + ' days', m = x.names.length > 1;
-    const h = x.t === 's' ? (m ? 'Statements close ' : 'Statement closes ') + w : (m ? 'Payments due ' : 'Payment due ') + w;
-    return `<div class="sr"><div class="ic" style="color:${x.t === 's' ? '#0094ff' : '#ffb700'}">${svg(IC[x.t === 's' ? 'stmt' : 'due'])}</div><div><b>${h}</b><small>${esc(x.names.join(', '))} on ${esc(short(x.d))}</small></div></div>`;
-  }).join('');
-}
-
 function renderCards() {
-  cardSummary();
+  /* one line under the title: "$66,600 total limit · 5 cards" */
   const limTot = S.cards.reduce((s, c) => s + (+c.limit || 0), 0);
-  $('#cTotal').textContent = limTot.toLocaleString('en-US');
-  const lr = S.cards.filter(c => +c.limit > 0);
-  $('#cBar').innerHTML = lr.map(c => `<i style="flex:${+c.limit};background:${esc(cCol(c.id))}"></i>`).join('');
-  $('#cCount').textContent = S.cards.length === 1 ? '1 card' : S.cards.length + ' cards';
+  $('#cLine').innerHTML = S.cards.length ? (limTot ? `<b>$${limTot.toLocaleString('en-US')}</b> total limit \u00b7 ` : '') + plural(S.cards.length, 'card') : '';
   const st = $('#cStack'); st.innerHTML = '';
   if (!S.cards.length) { st.innerHTML = '<div class="empty">Tap + to add your first card.</div>'; return; }
   S.cards.forEach(c => st.appendChild(cardEl(c)));
@@ -2346,9 +2335,6 @@ function renderSettings(page) {
     <div class="panel sp">${setRow('#00c805', SET_IC.sync, 'Status', ' ', 1)}<button class="row rowb" id="setSync" type="button"><div class="ic" style="color:#0094ff">${svg(SET_IC.key, 19)}</div><div class="rm"><div class="val">Sync settings</div><div class="lab">GitHub token and Gist ID</div></div>${svg(IC.right, 18)}</button></div>
     <div class="sec">Home screen</div>
     <div class="panel sp"><button class="row rowb" id="setHome" type="button"><div class="ic" style="color:#ffb700">${svg(SET_IC.home, 19)}</div><div class="rm"><div class="val">Customize Home</div><div class="lab">Order and size of cards</div></div>${svg(IC.right, 18)}</button></div>
-    <div class="sec">Display</div>
-    <div class="zseg" id="setTheme" role="radiogroup" aria-label="Display">${[['light', 'Light'], ['dark', 'Dark'], ['dim', 'Dim']].map(([k, n]) => `<button type="button" role="radio" data-t="${k}">${n}</button>`).join('')}</div>
-    <div class="hint">Applies to this device only.</div>
     <div class="sec">Security</div>
     <div class="panel sp"><button class="row rowb" id="setPin" type="button"><div class="ic" style="color:#9d4edd">${svg(SET_IC.lock, 19)}</div><div class="rm"><div class="val">${hasPin() ? 'Change PIN' : 'Set PIN'}</div><div class="lab">${hasPin() ? 'Passcode for card details' : 'Ask for a passcode before showing card details'}</div></div>${svg(IC.right, 18)}</button>${hasPin() ? `<button class="row rowb" id="setPinRm" type="button"><div class="ic" style="color:#ff5000">${svg(SET_IC.lock, 19)}</div><div class="rm"><div class="val">Remove PIN</div><div class="lab">Show card details without a passcode</div></div>${svg(IC.right, 18)}</button>` : ''}</div>
     <div class="sec">Data</div>
@@ -2365,9 +2351,6 @@ function renderSettings(page) {
     $('#setPin').onclick = () => renderSettings('pin');
     if ($('#setPinRm')) $('#setPinRm').onclick = () => renderSettings('pinrm');
     $('#setData').onclick = () => renderSettings('data');
-    const paintTheme = t => $$('#setTheme button').forEach(b => { const on = b.dataset.t === t; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
-    paintTheme(themeNow());
-    $('#setTheme').onclick = e => { const b = e.target.closest('button'); if (!b) return; LS.set('et_theme', b.dataset.t); paintTheme(applyTheme(b.dataset.t)); };
     $$('#setAv').forEach(a => { a.className = 'av big' + (Sync.cur.cls ? ' ' + Sync.cur.cls : ''); });
     $$('.syncT').forEach(x => { x.textContent = Sync.cur.text; }); $$('.sync-v').forEach(x => { x.classList.remove('w', 'e'); if (Sync.cur.cls) x.classList.add(Sync.cur.cls); });
     refreshSetSub();
@@ -2565,6 +2548,7 @@ function bindGlobal() {
   /* Home: chevron icon, Maaser controls */
   $$('.chev').forEach(x => { x.innerHTML = svg(IC.right, 16); });
   bindHomeEdit();
+  bindPaidSwipe();
   $('#hSub').innerHTML = svg(IC.minus, 20);
   $('#hAdd').innerHTML = svg(IC.plus, 20);
   $('#hSub').onclick = () => Maaser.adjust(-1, $('#hAdj'));
