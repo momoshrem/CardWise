@@ -480,6 +480,21 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 
 /* Payments Month view: one thin bar split by card */
 .psplit{display:flex;gap:3px;height:10px;margin-top:14px}.psplit[hidden]{display:none}.psplit i{display:block;height:100%;border-radius:4px;min-width:4px}
+
+/* Reminders: switches, day chips, time */
+.sw{width:51px;height:31px;border-radius:16px;background:var(--p2);border:1px solid var(--line);position:relative;flex:none;padding:0;cursor:pointer;transition:background .2s}
+.sw::after{content:"";position:absolute;top:2px;left:2px;width:25px;height:25px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .2s}
+.sw.on{background:#2ecc40;border-color:#2ecc40}.sw.on::after{left:22px}
+.rcard{padding:2px 16px}
+.rrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}.rrow.rtop{border-bottom:1px solid var(--line)}
+.rrow b{font-size:15px;font-weight:600;color:var(--tx)}.rrow small{display:block;font-size:12.5px;color:var(--mut);margin-top:2px}
+.rsub{font-size:12.5px;color:var(--sub);font-weight:600;margin-top:12px}
+.dchips{display:flex;flex-wrap:wrap;gap:8px;padding:8px 0 14px}
+.dchips button{padding:8px 13px;border-radius:999px;background:var(--p2);border:1px solid var(--line);font:inherit;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;min-height:36px}
+.dchips button.on{background:rgba(46,204,64,.16);border-color:rgba(46,204,64,.45);color:var(--hi)}
+.tm{width:auto;margin:0;font-size:15px;font-weight:600;color:var(--tx);background:var(--p2);border:1px solid var(--line);border-radius:10px;padding:7px 12px;-webkit-appearance:none;appearance:none;text-align:center}
+.roff{opacity:.45;pointer-events:none}
+#remStat:empty{display:none}
 </style>
 </head>
 <body>
@@ -678,12 +693,28 @@ function homeHidden(h) {
   return out.length >= HOME_KEYS.length ? out.slice(0, HOME_KEYS.length - 1) : out;
 }
 const homeFrom = h => ({ order: homeOrder(h && h.order), hidden: homeHidden(h && h.hidden), updatedAt: (h && +h.updatedAt) || 0 });
+/* Reminders: what to be reminded about, synced to every device; sent each morning by the GitHub job */
+const REM_DAYS = [0, 1, 2, 3, 5, 7];
+const remDays = a => REM_DAYS.filter(d => (Array.isArray(a) ? a : []).map(Number).indexOf(d) >= 0);
+const remFrom = r => {
+  r = r && typeof r === 'object' ? r : {};
+  return {
+    pay: r.pay !== false, payDays: Array.isArray(r.payDays) ? remDays(r.payDays) : [0, 2],
+    stmt: r.stmt !== false, stmtDays: Array.isArray(r.stmtDays) ? remDays(r.stmtDays) : [1],
+    hour: Math.max(0, Math.min(23, Math.round(+r.hour) || (r.hour === 0 ? 0 : 9))), tz: String(r.tz || ''), updatedAt: +r.updatedAt || 0
+  };
+};
+/* the phones that asked for reminders: each keeps its own push address and on/off */
+const devFrom = d => (Array.isArray(d) ? d : []).filter(x => x && x.id && x.sub && x.sub.endpoint)
+  .map(x => ({ id: String(x.id), sub: x.sub, on: !!x.on, label: String(x.label || '').slice(0, 30), updatedAt: +x.updatedAt || 0 }));
 const EMPTY = () => ({
   expenses: [],
   maaser: { amount: 0, history: [], updatedAt: 0 },
   home: { order: HOME_KEYS.slice(), hidden: [], updatedAt: 0 },
   profile: { name: '', updatedAt: 0 },
   security: { pin: '', updatedAt: 0 },
+  reminders: remFrom(null),
+  devices: [],
   cards: [],
   payments: [],
   deleted: { expenses: {}, cards: {}, payments: {} },
@@ -707,6 +738,8 @@ function loadState() {
       S.home = homeFrom(j.home);
       S.profile = { name: String((j.profile && j.profile.name) || '').slice(0, 30), updatedAt: (j.profile && +j.profile.updatedAt) || 0 };
       S.security = { pin: String((j.security && j.security.pin) || '').slice(0, 40), updatedAt: (j.security && +j.security.updatedAt) || 0 };
+      S.reminders = remFrom(j.reminders);
+      S.devices = devFrom(j.devices);
     }
   } catch (e) { S = EMPTY(); }
   sortCards();
@@ -777,14 +810,15 @@ const Sync = {
   },
 
   serialize(kind) {
-    if (kind === 'expenses') return { version: 1, expenses: S.expenses, maaser: S.maaser, home: S.home, profile: S.profile, security: S.security, deleted: S.deleted.expenses };
+    if (kind === 'expenses') return { version: 1, expenses: S.expenses, maaser: S.maaser, home: S.home, profile: S.profile, security: S.security, reminders: S.reminders, devices: S.devices, deleted: S.deleted.expenses };
     if (kind === 'cards') return { version: 1, cards: S.cards, deleted: S.deleted.cards };
     return { version: 2, payments: S.payments, deleted: S.deleted.payments };
   },
 
   /* merge what is in the gist into local data; returns true if anything visible changed */
   mergeIn(remote) {
-    const before = canon({ e: S.expenses, m: S.maaser, h: S.home, n: S.profile, s: S.security, c: S.cards, p: S.payments });
+    const snap = () => canon({ e: S.expenses, m: S.maaser, h: S.home, n: S.profile, s: S.security, r: S.reminders, d: S.devices, c: S.cards, p: S.payments });
+    const before = snap();
     const rx = remote.expenses || {}, rc = remote.cards || {}, rp = remote.payments || {};
     const e = mergeList(S.expenses, rx.expenses, S.deleted.expenses, rx.deleted);
     S.expenses = e.items; S.deleted.expenses = e.tombs;
@@ -800,11 +834,13 @@ const Sync = {
     if (rx.security && typeof rx.security === 'object' && typeof rx.security.pin === 'string' && (+rx.security.updatedAt || 0) > (S.security.updatedAt || 0)) {
       S.security = { pin: rx.security.pin.slice(0, 40), updatedAt: +rx.security.updatedAt };
     }
+    if (rx.reminders && typeof rx.reminders === 'object' && (+rx.reminders.updatedAt || 0) > (S.reminders.updatedAt || 0)) S.reminders = remFrom(rx.reminders);
+    if (Array.isArray(rx.devices)) S.devices = devFrom(mergeList(S.devices, devFrom(rx.devices), {}, {}).items);
     const c = mergeList(S.cards, rc.cards, S.deleted.cards, rc.deleted);
     S.cards = c.items; S.deleted.cards = c.tombs; sortCards();
     const p = mergeList(S.payments, rp.payments, S.deleted.payments, rp.deleted);
     S.payments = p.items; S.deleted.payments = p.tombs;
-    return before !== canon({ e: S.expenses, m: S.maaser, h: S.home, n: S.profile, s: S.security, c: S.cards, p: S.payments });
+    return before !== snap();
   },
 
   async parseFiles(j) {
@@ -1269,8 +1305,9 @@ function bindHomeEdit() {
 /* =====================================================================
    Expenses tab + Maaser
    ===================================================================== */
-/* softer tones that sit with the card colors */
-const EXP_COLORS = ['#2e9e3a', '#e0603a', '#d9a43a', '#2a7fb8', '#a78bfa', '#d9545f', '#3fb8a8', '#d0559a'];
+/* 20 soft tones that sit with the card colors, handed out biggest expense first; none repeats before the 21st */
+const EXP_COLORS = ['#2e9e3a', '#e0603a', '#d9a43a', '#2a7fb8', '#a78bfa', '#d9545f', '#3fb8a8', '#d0559a', '#5b63d9', '#8fbf3f',
+  '#b87a4b', '#62b8e8', '#a554b0', '#73cfa2', '#c9b27c', '#e893a6', '#9c9a3f', '#8fa0e8', '#a8443c', '#2fc4d6'];
 const SUBS_ID = 'subscriptions';
 let subsOpen = false;
 
@@ -2212,7 +2249,8 @@ const SET_IC = {
   save: '<path d="M12 4v11M7 11l5 5 5-5M5 20h14"/>',
   table: '<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M4 15h16M10 4v16"/>',
   restore: '<path d="M12 20V9M7 13l5-5 5 5M5 4h14"/>',
-  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>'
+  undo: '<path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/>',
+  bell: '<path d="M6 8a6 6 0 0112 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 003.4 0"/>'
 };
 const firstName = () => { const n = ((S.profile && S.profile.name) || '').trim(); return n ? n.split(/\s+/)[0] : ''; };
 
@@ -2240,6 +2278,8 @@ function renderSettings(page) {
     renderSyncPage(host);
   } else if (page === 'pin' || page === 'pinrm') {
     renderPinPage(host, page === 'pinrm' ? 'remove' : '');
+  } else if (page === 'rem') {
+    renderRemPage(host);
   } else if (page === 'data') {
     renderDataPage(host);
   } else if (page === 'restore') {
@@ -2250,6 +2290,8 @@ function renderSettings(page) {
     <div class="hint">Shown on your avatar. Syncs to your other devices.</div>
     <div class="sec">Sync</div>
     <div class="panel sp">${setRow('#00c805', SET_IC.sync, 'Status', ' ', 1)}<button class="row rowb" id="setSync" type="button"><div class="ic" style="color:#0094ff">${svg(SET_IC.key, 19)}</div><div class="rm"><div class="val">Sync settings</div><div class="lab">GitHub token and Gist ID</div></div>${svg(IC.right, 18)}</button></div>
+    <div class="sec">Reminders</div>
+    <div class="panel sp"><button class="row rowb" id="setRem" type="button"><div class="ic" style="color:#2ecc40">${svg(SET_IC.bell, 19)}</div><div class="rm"><div class="val">Reminders</div><div class="lab">${esc(remSummary())}</div></div>${svg(IC.right, 18)}</button></div>
     <div class="sec">Home screen</div>
     <div class="panel sp"><button class="row rowb" id="setHome" type="button"><div class="ic" style="color:#ffb700">${svg(SET_IC.home, 19)}</div><div class="rm"><div class="val">Customize Home</div><div class="lab">Order and size of cards</div></div>${svg(IC.right, 18)}</button></div>
     <div class="sec">Security</div>
@@ -2265,6 +2307,7 @@ function renderSettings(page) {
     inp.onkeydown = e => { if (e.key === 'Enter') inp.blur(); };
     $('#setSync').onclick = () => renderSettings('sync');
     $('#setHome').onclick = () => renderSettings('home');
+    $('#setRem').onclick = () => renderSettings('rem');
     $('#setPin').onclick = () => renderSettings('pin');
     if ($('#setPinRm')) $('#setPinRm').onclick = () => renderSettings('pinrm');
     $('#setData').onclick = () => renderSettings('data');
@@ -2315,6 +2358,79 @@ function renderSyncPage(host) {
 
 function openSettings(page) { renderSettings(page || 'main'); $('#settings').classList.add('on'); }
 function closeSettings() { $('#settings').classList.remove('on'); renderHome(); }
+
+/* ---------- Reminders: push notifications sent each morning by a scheduled GitHub job that reads the gist ---------- */
+const VAPID_KEY = 'BHYchbU0ysf5oI_1LBZiLlB8EtRfV04ON0An4yzGxtUQ3YUizrHL0iUftzIv3U7m8lAUy5Kfdtpxdo5YtQFkjWg';
+const devId = () => { let d = LS.get('et_dev'); if (!d) { d = uid(); LS.set('et_dev', d); } return d; };
+const myDevice = () => S.devices.find(d => d.id === devId());
+const pushOk = () => 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+const remOn = () => { const d = myDevice(); return !!(d && d.on && pushOk() && Notification.permission === 'granted'); };
+const hourTxt = h => (h % 12 || 12) + ':00 ' + (h < 12 ? 'AM' : 'PM');
+function remSummary() {
+  if (!remOn()) return 'Off on this phone';
+  const r = S.reminders, what = r.pay && r.stmt ? 'Payments and statements' : r.pay ? 'Payments' : r.stmt ? 'Statements' : 'Nothing chosen';
+  return what + ' · ' + hourTxt(r.hour);
+}
+function saveRem(change) {
+  Object.assign(S.reminders, change, { tz: Intl.DateTimeFormat().resolvedOptions().timeZone || S.reminders.tz, updatedAt: nowTs() });
+  commit('expenses');
+}
+function setDevice(on, sub) {
+  const d = myDevice(), label = /iphone|ipad/i.test(navigator.userAgent) ? 'iPhone' : /android/i.test(navigator.userAgent) ? 'Android' : 'This device';
+  if (d) Object.assign(d, { on, updatedAt: nowTs() }, sub ? { sub } : {});
+  else if (sub) S.devices.push({ id: devId(), sub, on, label, updatedAt: nowTs() });
+  commit('expenses');
+}
+const b64key = s => { const p = '='.repeat((4 - s.length % 4) % 4), r = atob((s + p).replace(/-/g, '+').replace(/_/g, '/')); return Uint8Array.from(r, c => c.charCodeAt(0)); };
+/* turn reminders on for this phone: ask permission, get a push address, save it to the gist */
+async function remTurnOn() {
+  if (!pushOk()) throw new Error(/iphone|ipad/i.test(navigator.userAgent) ? 'Open CardWise from your Home Screen to turn on reminders.' : 'This browser can’t get notifications.');
+  if (!Sync.connected()) throw new Error('Connect Sync first. Reminders are sent from your gist.');
+  const p = await Notification.requestPermission();
+  if (p !== 'granted') throw new Error('Notifications are blocked. Allow them for CardWise in your phone’s Settings.');
+  const reg = await navigator.serviceWorker.ready;
+  const sub = (await reg.pushManager.getSubscription()) || await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64key(VAPID_KEY) });
+  if (!S.reminders.tz) S.reminders.tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+  setDevice(true, JSON.parse(JSON.stringify(sub)));
+}
+function renderRemPage(host, msg) {
+  const r = S.reminders, on = remOn();
+  const sw = (id, v, label) => `<button class="sw${v ? ' on' : ''}" id="${id}" type="button" role="switch" aria-checked="${v}" aria-label="${label}"></button>`;
+  const chips = (k, sel) => `<div class="dchips" data-k="${k}">${REM_DAYS.map(d => `<button type="button" data-d="${d}" aria-pressed="${sel.indexOf(d) >= 0}"${sel.indexOf(d) >= 0 ? ' class="on"' : ''}>${d === 0 ? 'Day of' : d === 7 ? '1 week' : plural(d, 'day')}</button>`).join('')}</div>`;
+  const hours = Array.from({ length: 24 }, (_, h) => `<option value="${h}"${h === r.hour ? ' selected' : ''}>${hourTxt(h)}</option>`).join('');
+  host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Settings</button></div><h1 class="vt vt2">Reminders</h1>
+  <div class="lcard rcard"><div class="rrow"><div><b>Reminders on this phone</b><small>${on ? 'On · notifications allowed' : 'Off'}</small></div>${sw('remMe', on, 'Reminders on this phone')}</div></div>
+  <p class="stat${msg ? ' bad' : ''}" id="remStat" role="status">${esc(msg || '')}</p>
+  <div class="${on ? '' : 'roff'}">
+  <div class="sec">Payments due</div>
+  <div class="lcard rcard"><div class="rrow rtop"><b>Remind me about payments</b>${sw('remPay', r.pay, 'Remind me about payments')}</div>
+  <div class="rsub">How many days before</div>${chips('payDays', r.payDays)}</div>
+  <div class="sec">Statements closing</div>
+  <div class="lcard rcard"><div class="rrow rtop"><b>Remind me about statements</b>${sw('remStmt', r.stmt, 'Remind me about statements')}</div>
+  <div class="rsub">How many days before</div>${chips('stmtDays', r.stmtDays)}</div>
+  <div class="sec">Time</div>
+  <div class="lcard rcard"><div class="rrow"><div><b>Send at</b><small>Can arrive up to an hour late</small></div><select class="tm" id="remHour" aria-label="Send at">${hours}</select></div></div>
+  </div>`;
+  const again = m => renderRemPage(host, m);
+  $('#remMe').onclick = async () => {
+    if (remOn()) { setDevice(false); again(); return; }
+    $('#remStat').className = 'stat'; $('#remStat').textContent = 'Turning on…';
+    try { await remTurnOn(); again(); } catch (e) { again(e.message || 'Could not turn on reminders.'); }
+  };
+  $('#remPay').onclick = () => { saveRem({ pay: !r.pay }); again(); };
+  $('#remStmt').onclick = () => { saveRem({ stmt: !r.stmt }); again(); };
+  host.querySelectorAll('.dchips').forEach(box => {
+    box.onclick = e => {
+      const b = e.target.closest('button'); if (!b) return;
+      const k = box.dataset.k, d = +b.dataset.d, cur = r[k];
+      const next = cur.indexOf(d) >= 0 ? cur.filter(x => x !== d) : cur.concat(d);
+      if (!next.length) return;   /* keep at least one */
+      saveRem({ [k]: remDays(next) }); again();
+    };
+  });
+  $('#remHour').onchange = e => { saveRem({ hour: +e.target.value }); again(); };
+  $('#setBack').onclick = () => renderSettings('main');   /* this page redraws itself, so it binds its own back button */
+}
 
 /* =====================================================================
    Main: tabs, floating button, rendering, startup
