@@ -17,18 +17,17 @@ function nextDate(day, t) {
   for (let o = 0; o < 3; o++) { const d = clamp(t.y, t.m + o, day); if (+d >= today) return { d, days: Math.round((+d - today) / 864e5) }; }
 }
 const when = n => n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`;
-const dayName = d => d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', timeZone: 'UTC' });
 
-/* what to send today: one notification per card and event */
+/* what to send today: one notification per card and event, a single line each */
 function remindersFor(settings, cards, t) {
   const out = [], name = c => c.name || (c.last4 ? 'Card ending ' + c.last4 : 'Card');
   const want = (on, days) => on !== false ? (Array.isArray(days) ? days.map(Number).filter(x => DAYS_OK.includes(x)) : []) : [];
   const payDays = want(settings.pay, settings.payDays || [0, 2]), stmtDays = want(settings.stmt, settings.stmtDays || [1]);
   (cards || []).forEach(c => {
     if (+c.dueDay > 0) { const n = nextDate(+c.dueDay, t); if (n && payDays.includes(n.days))
-      out.push({ title: `${name(c)} payment due ${when(n.days)}`, body: n.days === 0 ? 'Don’t forget to pay it.' : dayName(n.d) + '.', tag: `p-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
+      out.push({ title: `${name(c)} payment due ${when(n.days)}`, body: '', tag: `p-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
     if (+c.stmtDay > 0) { const n = nextDate(+c.stmtDay, t); if (n && stmtDays.includes(n.days))
-      out.push({ title: `${name(c)} statement closes ${when(n.days)}`, body: dayName(n.d) + '.', tag: `s-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
+      out.push({ title: `${name(c)} statement closes ${when(n.days)}`, body: '', tag: `s-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
   });
   return out;
 }
@@ -50,7 +49,7 @@ async function main() {
   if (!phones.length) return console.log('No phone has reminders turned on.');
   const t = localNow(settings.tz || 'America/New_York', process.env.NOW ? new Date(process.env.NOW) : new Date());
   let list;
-  if (process.env.TEST === 'true') list = [{ title: 'CardWise reminders are on', body: 'This is a test. You’re all set.', tag: 'test' }];
+  if (process.env.TEST === 'true') list = [{ title: 'CardWise reminders are on', body: '', tag: 'test' }];
   else {
     const hour = Number.isFinite(+settings.hour) ? +settings.hour : 9;
     if (t.h < hour) return console.log(`Not time yet (${t.h}:00, sending at ${hour}:00).`);
