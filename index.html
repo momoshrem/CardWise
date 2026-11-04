@@ -39,8 +39,14 @@ input,textarea{user-select:text;-webkit-user-select:text;width:100%;background:v
 .n-bar{display:flex;height:10px;border-radius:5px;overflow:hidden;gap:2px;background:var(--p2)}.n-bar i{display:block;height:100%}
 .n-leg{display:flex;flex-wrap:wrap;gap:6px 16px;margin-top:12px;font-size:12px;color:var(--sub)}.n-leg span{display:flex;align-items:center;gap:6px}.n-leg i{width:8px;height:8px;border-radius:50%;display:inline-block}
 .n-date{font-size:12px;color:var(--amb);font-weight:500}
-.n-next.urgent{border-color:rgba(255,183,0,.45)}
-.n-next.st .n-date{color:var(--blue)}.n-next.st.urgent{border-color:rgba(0,148,255,.45)}
+.n-next.st .n-date{color:var(--blue)}
+/* Next up border: the color of what comes first; soft within 3 days, a little stronger on the day */
+.n-next.bp{border-color:rgba(255,183,0,.5)}.n-next.bs{border-color:rgba(0,148,255,.5)}
+.n-next.bx{border-color:transparent;background:linear-gradient(var(--p1),var(--p1)) padding-box,linear-gradient(135deg,rgba(255,183,0,.5),rgba(0,148,255,.5)) border-box}
+.n-next.b0{border-width:1.5px}
+.n-next.bp.b0{border-color:rgba(255,183,0,.75);box-shadow:0 0 14px rgba(255,183,0,.12)}
+.n-next.bs.b0{border-color:rgba(0,148,255,.75);box-shadow:0 0 14px rgba(0,148,255,.12)}
+.n-next.bx.b0{background:linear-gradient(var(--p1),var(--p1)) padding-box,linear-gradient(135deg,rgba(255,183,0,.75),rgba(0,148,255,.75)) border-box;box-shadow:0 0 14px rgba(120,160,130,.12)}
 .n-tag{font-style:normal;font-weight:600;font-size:12px;flex-shrink:0}.n-tag.p{color:var(--amb)}.n-tag.s{color:var(--blue)}
 .n-none{font-size:14px;color:var(--sub);line-height:1.5;margin-top:8px}
 .n-maaT{display:flex;align-items:center;gap:6px;font-weight:500;font-size:13px;letter-spacing:0;text-transform:none;color:var(--mut)}.n-maaT i{width:6px;height:6px;border-radius:50%;background:var(--g)}
@@ -498,7 +504,6 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .nr-ring.two .nr-mid b{font-size:31px}.nr-ring.two .nr-mid b.t{font-size:19px}.nr-ring.two .nr-mid span{font-size:12px}
 .nr-txt.both .nr-ttl{font-size:18px}.nr-t2{margin-top:14px}
 .nr-when{font-size:12.5px;font-weight:600;color:var(--blue);margin-top:1px}
-.n-next.sb{border-color:rgba(0,148,255,.45)}
 </style>
 </head>
 <body>
@@ -1038,9 +1043,9 @@ function nextUpInfo() {
   if (!P) { P = Q; Q = null; }   /* only statements: the next one leads, on its own */
   const same = !!Q && +Q.date === +P.date, showS = !!Q && (same || Q.days <= 1);
   if (same) Q.fill = P.fill;
-  /* what's coming after it: one line per card and date (a card with both on one day gets one line), at most 4 lines */
+  /* what's coming after it in the next 15 days: one line per card and date (a card with both on one day gets one line) */
   const soon = [];
-  ev.filter(e => !(e.k === lead && +e.d === +P.date) && !(showS && e.k === 's' && +e.d === +Q.date)).forEach(e => {
+  ev.filter(e => daysUntil(e.d) <= 15 && !(e.k === lead && +e.d === +P.date) && !(showS && e.k === 's' && +e.d === +Q.date)).forEach(e => {
     const l = soon.find(x => +x.d === +e.d && x.c === e.c);
     if (l) l.k = 'b'; else soon.push({ d: e.d, c: e.c, k: e.k });
   });
@@ -1073,10 +1078,10 @@ function renderNextUp() {
   const pT = n => n > 1 ? 'Payments due' : 'Payment due', sT = n => n > 1 ? 'Statements close' : 'Statement closes';
   /* rings: one section per card in its chart color; two rings when there is a next statement too */
   const ring = (r, w, cards, fill) => {
-    const C = 2 * Math.PI * r, n = cards.length, gap = n > 1 ? 4 : 0;
+    const C = 2 * Math.PI * r, n = cards.length;   /* several cards on one day: their colors meet, no gaps */
     let out = `<circle cx="46" cy="46" r="${r}" fill="none" style="stroke:var(--track)" stroke-width="${w}"/>`, off = 0;
     cards.forEach(c => {
-      const seg = C * fill.f / n, L = Math.max(seg - gap, 1);
+      const seg = C * fill.f / n, L = Math.max(seg, 1);
       out += `<circle cx="46" cy="46" r="${r}" fill="none" stroke="${esc(cCol(c.id))}" stroke-width="${w}" stroke-linecap="${n > 1 ? 'butt' : 'round'}" stroke-dasharray="${L.toFixed(1)} 999" stroke-dashoffset="${(-off).toFixed(1)}"${fill.faint ? ' opacity=".4"' : ''}/>`;
       off += seg;
     });
@@ -1097,8 +1102,10 @@ function renderNextUp() {
   const when = d => d === 0 ? 'today' : `in ${d} ${d === 1 ? 'day' : 'days'}`;
   const label = `${st ? 'Next statement closes' : 'Next payment due'} ${when(days)}, ${esc(weekdayDate(P.date))}: ${named(P.cards)}.`
     + (showS ? ` Statement closes ${when(Q.days)}: ${named(Q.cards)}.` : '') + ' Open Cards';
-  /* border: yellow when the payment is 3 days away or less; blue when a statement is showing and the payment is not close */
-  const cls = (st ? ' st' : '') + (days <= 3 ? ' urgent' : showS ? ' sb' : '');
+  /* border: the color of whatever comes first (yellow payment, blue statement, both when they share the day);
+     soft within 3 days, a little stronger with a faint glow on the day itself, plain otherwise */
+  const pd = st ? 99 : days, sd = st ? days : Q ? Q.days : 99, near = Math.min(pd, sd);
+  const cls = (st ? ' st' : '') + (near > 3 ? '' : (pd === sd ? ' bx' : pd < sd ? ' bp' : ' bs') + (near === 0 ? ' b0' : ''));
   host.innerHTML = `<button class="n-card n-next${cls}" type="button" data-go="cards" aria-label="${label}">
     <div class="n-row nr-head"><span class="lbl" style="margin:0">Next up</span><span class="n-date">${esc(weekdayDate(P.date))}</span></div>
     <div class="nr">
