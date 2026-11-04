@@ -1,6 +1,6 @@
 /* CardWise service worker: keeps the app working offline.
    Your data lives in the browser and in your private gist, never in this cache. */
-const VERSION = 'et-v16';
+const VERSION = 'et-v17';
 const SHELL = ['./', 'index.html', 'manifest.json', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -36,6 +36,7 @@ self.addEventListener('fetch', e => {
 });
 
 /* Reminders: show the notification the GitHub job sends, and open the app when it is tapped.
+   No large image: Android already shows the app icon on the left, and iPhone always uses the app icon.
    The number on the app icon is how many reminders are waiting; opening the app clears it. */
 const setBadge = () => self.registration.getNotifications().then(list => {
   const nav = self.navigator;
@@ -46,7 +47,7 @@ self.addEventListener('push', e => {
   let d = {};
   try { d = e.data ? e.data.json() : {}; } catch (_) { d = { title: e.data ? e.data.text() : 'CardWise' }; }
   e.waitUntil(self.registration.showNotification(d.title || 'CardWise', {
-    body: d.body || '', tag: d.tag || undefined, icon: 'icons/icon-192.png', badge: 'icons/badge-96.png', data: { url: d.url || './' }
+    body: d.body || '', tag: d.tag || undefined, badge: 'icons/badge-96.png', data: { url: d.url || './' }
   }).then(setBadge));
 });
 self.addEventListener('notificationclick', e => {
