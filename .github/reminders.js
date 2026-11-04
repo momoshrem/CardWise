@@ -49,7 +49,7 @@ async function main() {
   if (!phones.length) return console.log('No phone has reminders turned on.');
   const t = localNow(settings.tz || 'America/New_York', process.env.NOW ? new Date(process.env.NOW) : new Date());
   let list;
-  if (process.env.TEST === 'true') list = [{ title: 'CardWise reminders are on', body: '', tag: 'test' }];
+  if (process.env.TEST === 'true') list = [{ title: 'TD Cash\nPayment due in 3 days', body: '', tag: 'test' }];   /* test: does a line break in the title show on iPhone? */
   else {
     const hour = Number.isFinite(+settings.hour) ? +settings.hour : 9;
     if (t.h < hour) return console.log(`Not time yet (${t.h}:00, sending at ${hour}:00).`);
