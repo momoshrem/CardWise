@@ -18,16 +18,17 @@ function nextDate(day, t) {
 }
 const when = n => n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`;
 
-/* what to send today: one notification per card and event, a single line each */
+/* what to send today: one notification per card and event.
+   iPhone gets one sentence (it cuts a title off at a line break); Android gets the card name, then the reminder on its own line. */
 function remindersFor(settings, cards, t) {
   const out = [], name = c => c.name || (c.last4 ? 'Card ending ' + c.last4 : 'Card');
   const want = (on, days) => on !== false ? (Array.isArray(days) ? days.map(Number).filter(x => DAYS_OK.includes(x)) : []) : [];
   const payDays = want(settings.pay, settings.payDays || [0, 2]), stmtDays = want(settings.stmt, settings.stmtDays || [1]);
   (cards || []).forEach(c => {
     if (+c.dueDay > 0) { const n = nextDate(+c.dueDay, t); if (n && payDays.includes(n.days))
-      out.push({ title: `${name(c)} payment due ${when(n.days)}`, body: '', tag: `p-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
+      out.push({ title: `${name(c)} payment due ${when(n.days)}`, android: `${name(c)}\nPayment due ${when(n.days)}`, body: '', tag: `p-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
     if (+c.stmtDay > 0) { const n = nextDate(+c.stmtDay, t); if (n && stmtDays.includes(n.days))
-      out.push({ title: `${name(c)} statement closes ${when(n.days)}`, body: '', tag: `s-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
+      out.push({ title: `${name(c)} statement closes ${when(n.days)}`, android: `${name(c)}\nStatement closes ${when(n.days)}`, body: '', tag: `s-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
   });
   return out;
 }
@@ -49,7 +50,7 @@ async function main() {
   if (!phones.length) return console.log('No phone has reminders turned on.');
   const t = localNow(settings.tz || 'America/New_York', process.env.NOW ? new Date(process.env.NOW) : new Date());
   let list;
-  if (process.env.TEST === 'true') list = [{ title: 'TD Cash\nPayment due in 3 days', body: '', tag: 'test' }];   /* test: does a line break in the title show on iPhone? */
+  if (process.env.TEST === 'true') list = [{ title: 'CardWise reminders are on', body: '', tag: 'test' }];
   else {
     const hour = Number.isFinite(+settings.hour) ? +settings.hour : 9;
     if (t.h < hour) return console.log(`Not time yet (${t.h}:00, sending at ${hour}:00).`);
@@ -58,8 +59,9 @@ async function main() {
   }
   console.log(`${list.length} reminder(s) for ${phones.length} phone(s).`);
   for (const n of list) for (const p of phones) {
-    if (process.env.DRY_RUN) { console.log('WOULD SEND', p.label || p.id, '|', n.title, '|', n.body); continue; }
-    try { await webpush.sendNotification(p.sub, JSON.stringify(n), { TTL: 12 * 3600, urgency: 'normal' }); console.log('Sent:', n.title, '->', p.label || 'phone'); }
+    const apple = /push\.apple\.com/.test(p.sub.endpoint), msg = { title: apple ? n.title : (n.android || n.title), body: n.body, tag: n.tag };
+    if (process.env.DRY_RUN) { console.log('WOULD SEND', p.label || p.id, '|', JSON.stringify(msg.title)); continue; }
+    try { await webpush.sendNotification(p.sub, JSON.stringify(msg), { TTL: 12 * 3600, urgency: 'normal' }); console.log('Sent:', n.title, '->', p.label || 'phone'); }
     catch (e) { console.log(`Could not reach ${p.label || 'a phone'} (${e.statusCode || e.message}).${e.statusCode === 404 || e.statusCode === 410 ? ' Turn reminders off and on again on that phone.' : ''}`); }
   }
   if (process.env.TEST !== 'true' && !process.env.DRY_RUN && !process.env.LOCAL_GIST)
