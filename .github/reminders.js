@@ -19,16 +19,17 @@ function nextDate(day, t) {
 const when = n => n === 0 ? 'today' : n === 1 ? 'tomorrow' : `in ${n} days`;
 
 /* what to send today: one notification per card and event.
-   iPhone gets one sentence (it cuts a title off at a line break); Android gets the card name, then the reminder on its own line. */
+   iPhone: the card name as the title (it shows one title line) and the reminder as the text under it.
+   Android: the card name, then the reminder on its own line, both in the title. */
 function remindersFor(settings, cards, t) {
   const out = [], name = c => c.name || (c.last4 ? 'Card ending ' + c.last4 : 'Card');
   const want = (on, days) => on !== false ? (Array.isArray(days) ? days.map(Number).filter(x => DAYS_OK.includes(x)) : []) : [];
   const payDays = want(settings.pay, settings.payDays || [0, 2]), stmtDays = want(settings.stmt, settings.stmtDays || [1]);
   (cards || []).forEach(c => {
     if (+c.dueDay > 0) { const n = nextDate(+c.dueDay, t); if (n && payDays.includes(n.days))
-      out.push({ title: `${name(c)} payment due ${when(n.days)}`, android: `${name(c)}\nPayment due ${when(n.days)}`, body: '', tag: `p-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
+      out.push({ title: name(c), body: `Payment due ${when(n.days)}`, android: `${name(c)}\nPayment due ${when(n.days)}`, tag: `p-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
     if (+c.stmtDay > 0) { const n = nextDate(+c.stmtDay, t); if (n && stmtDays.includes(n.days))
-      out.push({ title: `${name(c)} statement closes ${when(n.days)}`, android: `${name(c)}\nStatement closes ${when(n.days)}`, body: '', tag: `s-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
+      out.push({ title: name(c), body: `Statement closes ${when(n.days)}`, android: `${name(c)}\nStatement closes ${when(n.days)}`, tag: `s-${c.id}-${n.d.toISOString().slice(0, 10)}-${n.days}` }); }
   });
   return out;
 }
@@ -37,6 +38,14 @@ async function gh(path, opt = {}) {
   const r = await fetch('https://api.github.com' + path, Object.assign({}, opt, { headers: { Accept: 'application/vnd.github+json', Authorization: 'Bearer ' + TOKEN, 'Content-Type': 'application/json' } }));
   if (!r.ok) throw new Error(`GitHub ${r.status} on ${path}`);
   return r.json();
+}
+/* which reminders still need sending today: each one is remembered once sent, so a late run still sends,
+   a settings change during the day isn't blocked, and nothing goes out twice. Old entries are dropped after a week. */
+function pending(list, state, dayKey, nowMs) {
+  const sent = Object.assign({}, (state && state.sent) || {});
+  Object.keys(sent).forEach(k => { if (nowMs - Date.parse(sent[k]) > 7 * 864e5) delete sent[k]; });
+  const todo = list.filter(n => !sent[n.tag + '@' + dayKey]);
+  return { todo, mark: n => { sent[n.tag + '@' + dayKey] = new Date(nowMs).toISOString(); }, sent };
 }
 async function fileText(f) { return f.truncated ? (await fetch(f.raw_url)).text() : f.content; }
 
@@ -49,23 +58,29 @@ async function main() {
   const settings = ex.reminders || {}, phones = (ex.devices || []).filter(d => d.on && d.sub && d.sub.endpoint);
   if (!phones.length) return console.log('No phone has reminders turned on.');
   const t = localNow(settings.tz || 'America/New_York', process.env.NOW ? new Date(process.env.NOW) : new Date());
-  let list;
-  if (process.env.TEST === 'true') list = [{ title: 'CardWise reminders are on', body: '', tag: 'test' }];
+  const nowMs = process.env.NOW ? Date.parse(process.env.NOW) : Date.now();
+  const test = process.env.TEST === 'true';
+  let list, track = null;
+  if (test) list = [{ title: 'CardWise reminders are on', body: '', tag: 'test' }];
   else {
     const hour = Number.isFinite(+settings.hour) ? +settings.hour : 9;
     if (t.h < hour) return console.log(`Not time yet (${t.h}:00, sending at ${hour}:00).`);
-    if (state.lastSent === t.key) return console.log('Already sent today.');
-    list = remindersFor(settings, cd.cards, t);
+    const all = remindersFor(settings, cd.cards, t);
+    track = pending(all, state, t.key, nowMs); list = track.todo;
+    if (!list.length) return console.log(all.length ? 'Today\'s reminders were already sent.' : 'Nothing to remind about today.');
   }
   console.log(`${list.length} reminder(s) for ${phones.length} phone(s).`);
-  for (const n of list) for (const p of phones) {
-    const apple = /push\.apple\.com/.test(p.sub.endpoint), msg = { title: apple ? n.title : (n.android || n.title), body: n.body, tag: n.tag };
-    if (process.env.DRY_RUN) { console.log('WOULD SEND', p.label || p.id, '|', JSON.stringify(msg.title)); continue; }
+  for (const n of list) {
+    for (const p of phones) {
+    const apple = /push\.apple\.com/.test(p.sub.endpoint), msg = apple || !n.android ? { title: n.title, body: n.body || '', tag: n.tag } : { title: n.android, body: '', tag: n.tag };
+    if (process.env.DRY_RUN) { console.log('WOULD SEND', p.label || p.id, '|', JSON.stringify(msg.title), '|', JSON.stringify(msg.body)); continue; }
     try { await webpush.sendNotification(p.sub, JSON.stringify(msg), { TTL: 12 * 3600, urgency: 'normal' }); console.log('Sent:', n.title, '->', p.label || 'phone'); }
     catch (e) { console.log(`Could not reach ${p.label || 'a phone'} (${e.statusCode || e.message}).${e.statusCode === 404 || e.statusCode === 410 ? ' Turn reminders off and on again on that phone.' : ''}`); }
+    }
+    if (track) track.mark(n);
   }
-  if (process.env.TEST !== 'true' && !process.env.DRY_RUN && !process.env.LOCAL_GIST)
-    await gh('/gists/' + GIST, { method: 'PATCH', body: JSON.stringify({ files: { [STATE_FILE]: { content: JSON.stringify({ lastSent: t.key }) } } }) });
+  if (track && !process.env.DRY_RUN && !process.env.LOCAL_GIST)
+    await gh('/gists/' + GIST, { method: 'PATCH', body: JSON.stringify({ files: { [STATE_FILE]: { content: JSON.stringify({ sent: track.sent }) } } }) });
 }
 if (require.main === module) main().catch(e => { console.error(e.message); process.exit(1); });
-module.exports = { remindersFor, localNow, nextDate };
+module.exports = { remindersFor, localNow, nextDate, pending };
