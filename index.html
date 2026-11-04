@@ -399,8 +399,6 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .nr-txt{flex:1;min-width:0}
 .nr-head{margin-bottom:16px}
 .nr-ttl{font-size:21px;font-weight:600;color:var(--tx);line-height:1.25}
-.nr-gh{font-size:12.5px;font-weight:600}.nr-gh.p{color:var(--amb)}.nr-gh.s{color:var(--blue)}
-.nr-list+.nr-gh{margin-top:8px}
 /* the cards beside the ring: small chips, full names */
 .nr-list{display:flex;flex-direction:column;align-items:flex-start;gap:5px;margin-top:7px}
 .nr-list div{display:flex;align-items:center;gap:5px;max-width:100%;min-width:0;padding:3px 8px 3px 7px;border-radius:999px;background:var(--p2);border:1px solid var(--line);font-size:12px;color:var(--tx)}
@@ -495,6 +493,12 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .tm{width:auto;margin:0;font-size:15px;font-weight:600;color:var(--tx);background:var(--p2);border:1px solid var(--line);border-radius:10px;padding:7px 12px;-webkit-appearance:none;appearance:none;text-align:center}
 .roff{opacity:.45;pointer-events:none}
 #remStat:empty{display:none}
+
+/* Next up with two rings: outer = next payment, inner = next statement */
+.nr-ring.two .nr-mid b{font-size:31px}.nr-ring.two .nr-mid b.t{font-size:19px}.nr-ring.two .nr-mid span{font-size:12px}
+.nr-txt.both .nr-ttl{font-size:18px}.nr-t2{margin-top:14px}
+.nr-when{font-size:12.5px;font-weight:600;color:var(--blue);margin-top:1px}
+.n-next.sb{border-color:rgba(0,148,255,.45)}
 </style>
 </head>
 <body>
@@ -1013,8 +1017,9 @@ function swipeClose(sheet, close) {
    ===================================================================== */
 const weekdayDate = d => d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-/* The soonest event: a payment due or a statement closing. If both fall on the same day the payment leads and the
-   statement rides along in the same ring. Also finds the event after it, for the "Then" line. */
+/* Next up is about your next payment. The outer ring counts down to it; the inner ring follows your next statement
+   close. That statement joins the payment beside the ring the day before, the day it closes, or when it closes the
+   same day as the payment (then both rings fill the same). With no payment days set, the next statement leads instead. */
 function nextUpInfo() {
   const ev = [];
   S.cards.forEach(c => {
@@ -1022,35 +1027,37 @@ function nextUpInfo() {
     if (+c.stmtDay > 0) ev.push({ k: 's', d: nxt(+c.stmtDay), c });
   });
   if (!ev.length) return null;
-  ev.sort((a, b) => (+a.d - +b.d) || (a.k === b.k ? 0 : a.k === 'p' ? -1 : 1));
-  const first = ev[0], date = first.d, days = daysUntil(date), kind = first.k;
-  const group = ev.filter(e => e.k === kind && +e.d === +date).map(e => e.c);
-  const other = ev.filter(e => e.k !== kind && +e.d === +date).map(e => e.c);
-  let stmt = null, frac = null;
-  if (kind === 'p') {
-    let prevDue = null;
-    group.forEach(c => {
-      if (+c.stmtDay > 0) { const s = prevDate(+c.stmtDay, false); if (s && (!stmt || s > stmt)) stmt = s; }
-      const p = prevDate(+c.dueDay, true); if (p && (!prevDue || p > prevDue)) prevDue = p;
-    });
-    /* only fill the ring when a statement has closed since the last due date */
-    if (stmt && date > stmt && (!prevDue || stmt >= prevDue)) frac = Math.max(0, Math.min(1, (today() - stmt) / (date - stmt)));
-    else stmt = null;
-  } else {
-    /* the ring fills from the previous statement close to this one */
-    group.forEach(c => { const s = prevDate(+c.stmtDay, true); if (s && (!stmt || s > stmt)) stmt = s; });
-    if (stmt && date > stmt) frac = Math.max(0, Math.min(1, (today() - stmt) / (date - stmt)));
-    else stmt = null;
-  }
+  const first = k => {
+    const a = ev.filter(e => e.k === k).sort((x, y) => x.d - y.d);
+    if (!a.length) return null;
+    const date = a[0].d, cards = a.filter(e => +e.d === +date).map(e => e.c);
+    return { date, days: daysUntil(date), cards, fill: ringFill(k, cards, date) };
+  };
+  let P = first('p'), Q = first('s');
+  const lead = P ? 'p' : 's';
+  if (!P) { P = Q; Q = null; }   /* only statements: the next one leads, on its own */
+  const same = !!Q && +Q.date === +P.date, showS = !!Q && (same || Q.days <= 1);
+  if (same) Q.fill = P.fill;
   /* what's coming after it: one line per card and date (a card with both on one day gets one line), at most 4 lines */
   const soon = [];
-  ev.filter(e => +e.d > +date).forEach(e => {
+  ev.filter(e => !(e.k === lead && +e.d === +P.date) && !(showS && e.k === 's' && +e.d === +Q.date)).forEach(e => {
     const l = soon.find(x => +x.d === +e.d && x.c === e.c);
     if (l) l.k = 'b'; else soon.push({ d: e.d, c: e.c, k: e.k });
   });
   const ko = { p: 0, b: 1, s: 2 };
   soon.sort((a, b) => (+a.d - +b.d) || ko[a.k] - ko[b.k] || S.cards.indexOf(a.c) - S.cards.indexOf(b.c));
-  return { kind, group, other, date, days, stmt, frac, soon: soon.slice(0, 4) };
+  return { lead, P, Q, same, showS, soon: soon.slice(0, 4) };
+}
+/* how full a ring is: a payment fills from the last statement close to the due date, a statement from the one before */
+function ringFill(k, cards, date) {
+  if (daysUntil(date) === 0) return { f: 1, faint: false };
+  let from = null, prevDue = null;
+  cards.forEach(c => {
+    if (+c.stmtDay > 0) { const s = prevDate(+c.stmtDay, k === 's'); if (s && (!from || s > from)) from = s; }
+    if (k === 'p' && +c.dueDay > 0) { const p = prevDate(+c.dueDay, true); if (p && (!prevDue || p > prevDue)) prevDue = p; }
+  });
+  if (from && date > from && (k === 's' || !prevDue || from >= prevDue)) return { f: Math.max(0.02, Math.min(1, (today() - from) / (date - from))), faint: false };
+  return { f: 1, faint: true };
 }
 
 function renderNextUp() {
@@ -1062,40 +1069,41 @@ function renderNextUp() {
       <div class="n-none">${S.cards.length ? 'Add a payment due day or statement day to a card to see a countdown here.' : 'Add a card to see when your next payment is due.'}</div></button>`;
     return;
   }
-  const { kind, group, other, date, days, frac, soon } = info;
-  const many = group.length > 1, st = kind === 's', both = other.length > 0;
-  /* title: "Payment due" or "Statements close"; when both fall on the same day each type gets its own small heading */
-  const pT = many ? 'Payments due' : 'Payment due', sT = n => n > 1 ? 'Statements close' : 'Statement closes';
-  const title = st ? sT(group.length) : pT;
-  /* ring: one section per card in its chart color; it fills from the last statement to the date */
-  const ringCards = group.concat(other.filter(c => !group.includes(c)));
-  const R = 40, C = 2 * Math.PI * R, n = ringCards.length, gap = n > 1 ? 5 : 0;
-  const fill = days === 0 || frac == null ? 1 : Math.max(frac, 0.02), faint = days !== 0 && frac == null;
-  let arcs = '', off = 0;
-  ringCards.forEach(c => {
-    const seg = C * fill / n, L = Math.max(seg - gap, 1);
-    arcs += `<circle cx="46" cy="46" r="${R}" fill="none" stroke="${esc(cCol(c.id))}" stroke-width="9" stroke-linecap="${n > 1 ? 'butt' : 'round'}" stroke-dasharray="${L.toFixed(1)} 999" stroke-dashoffset="${(-off).toFixed(1)}"${faint ? ' opacity=".4"' : ''}/>`;
-    off += seg;
-  });
+  const { lead, P, Q, same, showS, soon } = info, st = lead === 's', days = P.days;
+  const pT = n => n > 1 ? 'Payments due' : 'Payment due', sT = n => n > 1 ? 'Statements close' : 'Statement closes';
+  /* rings: one section per card in its chart color; two rings when there is a next statement too */
+  const ring = (r, w, cards, fill) => {
+    const C = 2 * Math.PI * r, n = cards.length, gap = n > 1 ? 4 : 0;
+    let out = `<circle cx="46" cy="46" r="${r}" fill="none" style="stroke:var(--track)" stroke-width="${w}"/>`, off = 0;
+    cards.forEach(c => {
+      const seg = C * fill.f / n, L = Math.max(seg - gap, 1);
+      out += `<circle cx="46" cy="46" r="${r}" fill="none" stroke="${esc(cCol(c.id))}" stroke-width="${w}" stroke-linecap="${n > 1 ? 'butt' : 'round'}" stroke-dasharray="${L.toFixed(1)} 999" stroke-dashoffset="${(-off).toFixed(1)}"${fill.faint ? ' opacity=".4"' : ''}/>`;
+      off += seg;
+    });
+    return out;
+  };
+  const two = !!Q, arcs = two ? ring(41, 8, P.cards, P.fill) + ring(31.5, 8, Q.cards, Q.fill) : ring(40, 9, P.cards, P.fill);
   const mid = days === 0 ? '<b class="t">Today</b>' : `<b>${days}</b><span>${days === 1 ? 'day' : 'days'}</span>`;
   const dot = c => `<i style="background:${esc(cCol(c.id))}"></i>`;
   const tag = k => k === 'b' ? '<em class="n-tag p">Payment</em> <em class="amp">&amp;</em> <em class="n-tag s">Statement</em>'
     : `<em class="n-tag ${k}">${k === 'p' ? 'Payment' : 'Statement'}</em>`;
-  /* the cards beside the ring as small chips with full names; a payment and a statement on the same day are grouped
-     under a yellow and a blue heading */
   const names = a => `<div class="nr-list">${a.map(c => `<div>${dot(c)}<s>${esc(lbl(c))}</s></div>`).join('')}</div>`;
-  const side = both ? `<div class="nr-gh p">${pT}</div>${names(group)}<div class="nr-gh s">${sT(other.length)}</div>${names(other)}`
-    : `<div class="nr-ttl">${title}</div>${names(group)}`;
+  /* beside the ring: the payment, and the statement when it is close (Today / Tomorrow, or nothing extra on the same day) */
+  const side = `<div class="nr-ttl">${st ? sT(P.cards.length) : pT(P.cards.length)}</div>${names(P.cards)}`
+    + (showS ? `<div class="nr-ttl nr-t2">${sT(Q.cards.length)}</div>${same ? '' : `<div class="nr-when">${Q.days === 0 ? 'Today' : 'Tomorrow'}</div>`}${names(Q.cards)}` : '');
   /* what's coming: date (once when cards share it), card color, full name, and a Payment / Statement tag */
   const soonTxt = soon.length ? `<div class="nr-soon">${soon.map((l, i) => `<div><b>${i && +soon[i - 1].d === +l.d ? '' : esc(short(l.d))}</b>${dot(l.c)}<s>${esc(lbl(l.c))}</s><span>${tag(l.k)}</span></div>`).join('')}</div>` : '';
   const named = a => a.map(c => esc(lbl(c))).join(', ');
-  const what = both ? 'payment due and statement closes' : st ? 'statement closes' : 'payment due';
-  const when = days === 0 ? 'today' : `in ${days} ${days === 1 ? 'day' : 'days'}`;
-  host.innerHTML = `<button class="n-card n-next${st ? ' st' : ''}${days <= 3 ? ' urgent' : ''}" type="button" data-go="cards" aria-label="Next ${what} ${when}, ${esc(weekdayDate(date))}: ${named(both ? group.concat(other) : group)}. Open Cards">
-    <div class="n-row nr-head"><span class="lbl" style="margin:0">Next up</span><span class="n-date">${esc(weekdayDate(date))}</span></div>
+  const when = d => d === 0 ? 'today' : `in ${d} ${d === 1 ? 'day' : 'days'}`;
+  const label = `${st ? 'Next statement closes' : 'Next payment due'} ${when(days)}, ${esc(weekdayDate(P.date))}: ${named(P.cards)}.`
+    + (showS ? ` Statement closes ${when(Q.days)}: ${named(Q.cards)}.` : '') + ' Open Cards';
+  /* border: yellow when the payment is 3 days away or less; blue when a statement is showing and the payment is not close */
+  const cls = (st ? ' st' : '') + (days <= 3 ? ' urgent' : showS ? ' sb' : '');
+  host.innerHTML = `<button class="n-card n-next${cls}" type="button" data-go="cards" aria-label="${label}">
+    <div class="n-row nr-head"><span class="lbl" style="margin:0">Next up</span><span class="n-date">${esc(weekdayDate(P.date))}</span></div>
     <div class="nr">
-      <div class="nr-ring" aria-hidden="true"><svg width="124" height="124" viewBox="0 0 92 92"><circle cx="46" cy="46" r="${R}" fill="none" style="stroke:var(--track)" stroke-width="9"/>${arcs}</svg><div class="nr-mid">${mid}</div></div>
-      <div class="nr-txt">${side}</div>
+      <div class="nr-ring${two ? ' two' : ''}" aria-hidden="true"><svg width="124" height="124" viewBox="0 0 92 92">${arcs}</svg><div class="nr-mid">${mid}</div></div>
+      <div class="nr-txt${showS ? ' both' : ''}">${side}</div>
     </div>
     ${soonTxt}</button>`;
 }
@@ -1142,10 +1150,10 @@ function renderHome() {
   /* small versions */
   $('#sExp').textContent = mf(tot);
   $('#sMaa').textContent = mf(S.maaser.amount);
-  const ni = nextUpInfo();
-  $('#sNextL').textContent = ni ? 'Next up \u00b7 ' + weekdayDate(ni.date) : 'Next up';
-  $('#sNext').textContent = ni ? (ni.days === 0 ? 'Today' : plural(ni.days, 'day')) : '\u2014';
-  $('#sNext').className = ni ? (ni.kind === 's' && !ni.other.length ? 'blu' : 'amb') : '';
+  const ni = nextUpInfo(), np = ni && ni.lead === 'p';
+  $('#sNextL').textContent = ni ? (np ? 'Next payment' : 'Next statement') + ' \u00b7 ' + weekdayDate(ni.P.date) : 'Next up';
+  $('#sNext').textContent = ni ? (ni.P.days === 0 ? 'Today' : plural(ni.P.days, 'day')) : '\u2014';
+  $('#sNext').className = ni ? (np ? 'amb' : 'blu') : '';
 
   paintPaidBig();
 
