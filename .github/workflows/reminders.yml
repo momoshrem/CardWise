@@ -1,7 +1,7 @@
 name: CardWise reminders
 on:
   schedule:
-    - cron: '7 * * * *'     # every hour; the script only sends once a day, at the time you picked in the app
+    - cron: '*/15 * * * *'  # every 15 minutes (GitHub often skips runs); each reminder is only ever sent once
     - cron: '23 15 1 * *'   # once a month: saves a tiny file so GitHub never pauses this job
   workflow_dispatch:
     inputs:
