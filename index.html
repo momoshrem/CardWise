@@ -2615,9 +2615,13 @@ function bindGlobal() {
   setInterval(() => { if (document.visibilityState === 'visible' && Sync.connected()) Sync.run(); }, 20000);
   /* a day may pass while the app stays open */
   setInterval(() => { if (document.visibilityState === 'visible') renderHome(); }, 60000);
-  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') renderHome(); });
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') { renderHome(); clearBadge(); } });
+  clearBadge();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(paintGreeting);
 }
+
+/* opening the app clears the reminder count on its icon */
+function clearBadge() { if (navigator.clearAppBadge) navigator.clearAppBadge().catch(() => {}); }
 
 function init() {
   loadState();
