@@ -1061,7 +1061,8 @@ function ringFill(k, cards, date) {
     if (+c.stmtDay > 0) { const s = prevDate(+c.stmtDay, k === 's'); if (s && (!from || s > from)) from = s; }
     if (k === 'p' && +c.dueDay > 0) { const p = prevDate(+c.dueDay, true); if (p && (!prevDue || p > prevDue)) prevDue = p; }
   });
-  if (from && date > from && (k === 's' || !prevDue || from >= prevDue)) return { f: Math.max(0.02, Math.min(1, (today() - from) / (date - from))), faint: false };
+  /* one day behind the calendar, so the day before still shows a clear gap; the ring only closes on the day itself */
+  if (from && date > from && (k === 's' || !prevDue || from >= prevDue)) return { f: Math.max(0.02, Math.min(1, (today() - from - DAY) / (date - from))), faint: false };
   return { f: 1, faint: true };
 }
 
@@ -1079,10 +1080,14 @@ function renderNextUp() {
   /* rings: one section per card in its chart color; two rings when there is a next statement too */
   const ring = (r, w, cards, fill) => {
     const C = 2 * Math.PI * r, n = cards.length;   /* several cards on one day: their colors meet, no gaps */
+    const op = fill.faint ? ' opacity=".4"' : '', arc = (col, len, offs, cap, extra = '') =>
+      `<circle cx="46" cy="46" r="${r}" fill="none" stroke="${esc(col)}" stroke-width="${w}" stroke-linecap="${cap}" stroke-dasharray="${Math.max(len, 1).toFixed(1)} 999" stroke-dashoffset="${(-offs).toFixed(1)}"${op}${extra}/>`;
     let out = `<circle cx="46" cy="46" r="${r}" fill="none" style="stroke:var(--track)" stroke-width="${w}"/>`, off = 0;
-    cards.forEach(c => {
-      const seg = C * fill.f / n, L = Math.max(seg, 1);
-      out += `<circle cx="46" cy="46" r="${r}" fill="none" stroke="${esc(cCol(c.id))}" stroke-width="${w}" stroke-linecap="${n > 1 ? 'butt' : 'round'}" stroke-dasharray="${L.toFixed(1)} 999" stroke-dashoffset="${(-off).toFixed(1)}"${fill.faint ? ' opacity=".4"' : ''}/>`;
+    /* several cards: rounded ends like a single-card ring (an underlay gives the last card's rounded end), colors meet inside */
+    if (n > 1) out += arc(cCol(cards[n - 1].id), C * fill.f, 0, 'round', ' data-cap="1"');
+    cards.forEach((c, i) => {
+      const seg = C * fill.f / n;
+      out += arc(cCol(c.id), seg, off, n === 1 || i === 0 ? 'round' : 'butt');
       off += seg;
     });
     return out;
