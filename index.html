@@ -305,6 +305,8 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 #plist .empty{padding:24px 0}
 /* detail pages */
 .ov .nav{margin-bottom:10px}
+.paidc{display:flex;align-items:center;gap:12px;background:var(--p1);border:.5px solid rgba(0,200,5,.4);border-radius:16px;padding:12px 16px;margin-top:12px}.paidc .ok{color:var(--g);display:flex}.paidc .rm{flex:1}.paidc .val{font-size:15px;color:var(--tx);font-weight:500}.paidc .lab{font-size:12px;color:var(--sub);margin-top:2px}
+#markpaid{margin-top:12px}
 .pillb{background:var(--p2);border:1px solid var(--line);border-radius:999px;padding:0 16px;min-height:38px;color:var(--tx);font-size:14px;font-weight:600;cursor:pointer}
 .ov .panel .row{gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}.ov .panel .row:last-child{border:0}
 .rr .v{font-size:15px;font-weight:600;color:var(--tx)}.rr .s{font-size:12.5px;color:var(--sub);margin-top:2px}
@@ -406,6 +408,9 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 /* the cards beside the ring: small chips, full names */
 .nr-list{display:flex;flex-direction:column;align-items:flex-start;gap:5px;margin-top:7px}
 .nr-list div{display:flex;align-items:center;gap:5px;max-width:100%;min-width:0;padding:3px 8px 3px 7px;border-radius:999px;background:var(--p2);border:1px solid var(--line);font-size:12px;color:var(--tx)}
+.n-tag.ok{color:var(--g)}.nr-mid b.ok{color:var(--g);display:flex}.nr-mid svg{transform:none}.nr-list b.ok{color:var(--g);display:inline-flex;vertical-align:-1px;margin-left:2px}.nr-list .nw{white-space:nowrap}.nr-list div.pd{gap:4px;padding:3px 6px 3px 6px}
+/* a name too long for one line wraps inside its chip instead of being cut off */
+.nr-list div{border-radius:12px}.nr-list div s{white-space:normal;overflow:visible;line-height:1.25}
 .nr-list i{width:7px;height:7px;border-radius:2px;flex:none}
 .nr-list s,.nr-soon s{text-decoration:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .amp{font-style:normal;font-size:12px;color:var(--sub)}
@@ -1040,8 +1045,22 @@ function nextUpInfo() {
   });
   const ko = { p: 0, b: 1, s: 2 };
   soon.sort((a, b) => (+a.d - +b.d) || ko[a.k] - ko[b.k] || S.cards.indexOf(a.c) - S.cards.indexOf(b.c));
+  if (lead === 'p') P.paid = P.cards.filter(c => isPaid(c, P.date));
+  soon.forEach(l => { l.paid = l.k !== 's' && isPaid(l.c, l.d); });
   return { lead, P, soon: soon.slice(0, 4) };
 }
+/* paid: marked as paid by hand for that due date, or any payment logged for the card from the day after its
+   statement closed through the due date (no statement day: since the due date before). Amounts do not matter. */
+function lastBefore(day, d) {
+  for (let o = 0; o < 3; o++) { const x = clampDay(d.getFullYear(), d.getMonth() - o, day); if (x < d) return x; }
+}
+function paidHow(c, due) {
+  if (c.paidFor && c.paidFor === tstr(due)) return { mark: true };
+  const from = lastBefore(+c.stmtDay > 0 ? +c.stmtDay : +c.dueDay, due);
+  const p = from && S.payments.filter(x => x.card === c.id && pd(x.date) > from && pd(x.date) <= due).sort((a, b) => a.date < b.date ? 1 : -1)[0];
+  return p ? { pay: p } : null;
+}
+const isPaid = (c, due) => !!paidHow(c, due);
 /* how full the ring is: a payment fills from the last statement close to the due date, a statement from the one before */
 function ringFill(k, cards, date) {
   if (daysUntil(date) === 0) return { f: 1, faint: false };
@@ -1068,24 +1087,29 @@ function renderNextUp() {
   /* the ring: one arc in the app icon's green, whatever the card; the chips beside it say which cards */
   const C = 2 * Math.PI * 40, op = P.fill.faint ? ' opacity=".4"' : '';
   const arcs = `<circle cx="46" cy="46" r="40" fill="none" stroke="#2ecc40" stroke-width="9" stroke-linecap="round" stroke-dasharray="${Math.max(C * P.fill.f, 1).toFixed(1)} 999"${op}/>`;
+  /* every card in the ring paid: the border calms down; the countdown stays */
+  const allPaid = !st && P.paid.length === n;
   const mid = days === 0 ? '<b class="t">Today</b>' : `<b>${days}</b><span>${days === 1 ? 'day' : 'days'}</span>`;
   const dot = c => `<i style="background:${esc(cCol(c.id))}"></i>`;
-  const tag = k => k === 'b' ? '<em class="n-tag p">Payment</em> <em class="amp">&amp;</em> <em class="n-tag s">Statement</em>'
-    : `<em class="n-tag ${k}">${k === 'p' ? 'Payment' : 'Statement'}</em>`;
+  const pay = l => l.paid ? '<em class="n-tag ok">Paid \u2713</em>' : '<em class="n-tag p">Payment</em>';
+  const tag = l => l.k === 'b' ? pay(l) + ' <em class="amp">&amp;</em> <em class="n-tag s">Statement</em>'
+    : l.k === 'p' ? pay(l) : '<em class="n-tag s">Statement</em>';
   /* the title says when: Due tomorrow / Due Saturday (within a week) / Due Wed, Nov 25; on the day the ring says Today */
   const verb = st ? 'Closes' : 'Due';
   const title = days === 0 ? (st ? (n > 1 ? 'Statements close' : 'Statement closes') : (n > 1 ? 'Payments due' : 'Payment due'))
     : days === 1 ? verb + ' tomorrow' : verb + ' ' + (days < 7 ? P.date.toLocaleDateString('en-US', { weekday: 'long' }) : weekdayDate(P.date));
-  const side = `<div class="nr-ttl">${title}</div><div class="nr-list">${P.cards.map(c => `<div>${dot(c)}<s>${esc(lbl(c))}</s></div>`).join('')}</div>`;
+  /* the check sticks to the last word, so if a long name wraps it never sits on a line by itself */
+  const paidName = c => { const w = lbl(c).split(' '), last = w.pop(); return (w.length ? esc(w.join(' ')) + ' ' : '') + `<span class="nw">${esc(last)}<b class="ok">${svg(IC.check, 10)}</b></span>`; };
+  const side = `<div class="nr-ttl">${title}</div><div class="nr-list">${P.cards.map(c => !st && P.paid.includes(c) ? `<div class="pd">${dot(c)}<s>${paidName(c)}</s></div>` : `<div>${dot(c)}<s>${esc(lbl(c))}</s></div>`).join('')}</div>`;
   /* the list: date (Today / Tomorrow when that close, once when cards share it), card color, full name, and a tag */
   const day = d => { const u = daysUntil(d); return u === 0 ? 'Today' : u === 1 ? 'Tomorrow' : esc(short(d)); };
-  const soonTxt = soon.length ? `<div class="nr-soon${soon.some(l => daysUntil(l.d) <= 1) ? ' wd' : ''}">${soon.map((l, i) => `<div><b>${i && +soon[i - 1].d === +l.d ? '' : day(l.d)}</b>${dot(l.c)}<s>${esc(lbl(l.c))}</s><span>${tag(l.k)}</span></div>`).join('')}</div>` : '';
+  const soonTxt = soon.length ? `<div class="nr-soon${soon.some(l => daysUntil(l.d) <= 1) ? ' wd' : ''}">${soon.map((l, i) => `<div><b>${i && +soon[i - 1].d === +l.d ? '' : day(l.d)}</b>${dot(l.c)}<s>${esc(lbl(l.c))}</s><span>${tag(l)}</span></div>`).join('')}</div>` : '';
   const named = a => a.map(c => esc(lbl(c))).join(', ');
   const label = `${st ? 'Next statement closes' : 'Next payment due'} ${days === 0 ? 'today' : `in ${plural(days, 'day')}`}, ${esc(weekdayDate(P.date))}: ${named(P.cards)}. Open Cards`;
   /* border: the color of whatever comes first (yellow payment, blue statement, both when they share the day);
      soft within 3 days, a little stronger with a faint glow on the day itself, plain otherwise */
   const sl = soon.filter(l => l.k !== 'p').map(l => daysUntil(l.d));
-  const pd = st ? 99 : days, sd = st ? days : sl.length ? Math.min(...sl) : 99, near = Math.min(pd, sd);
+  const pd = st || allPaid ? 99 : days, sd = st ? days : sl.length ? Math.min(...sl) : 99, near = Math.min(pd, sd);
   const cls = (st ? ' st' : '') + (near > 3 ? '' : (pd === sd ? ' bx' : pd < sd ? ' bp' : ' bs') + (near === 0 ? ' b0' : ''));
   host.innerHTML = `<button class="n-card n-next${cls}" type="button" data-go="cards" aria-label="${label}">
     <div class="n-row nr-head"><span class="lbl" style="margin:0">${st ? 'Next statement' : 'Next payment'}</span></div>
@@ -1609,6 +1633,14 @@ function openDetail(id) {
       row('due', '#ffb700', 'Payment due', d ? ord(d) + ' of each month' : 'Not set', d ? short(nxt(d)) : '', d ? inDays(nxt(d)) : '')) +
     row('open', '#9d4edd', 'Date opened', c.opened ? pd(c.opened).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Not set', '', c.opened ? (age(c.opened) === 'New' ? 'New card' : 'Card age ' + age(c.opened)) : '') +
     `<button class="row rowb" id="ccb" type="button"><div class="ic" style="color:${esc(cCol(c.id))}">${svg(IC.bars)}</div><div class="rm"><div class="val">Chart color</div>${c.chartColor ? '' : '<div class="lab">Automatic</div>'}</div><span class="cc-sw" style="background:${esc(cCol(c.id))}" aria-label="Chart color ${esc(cCol(c.id))}"></span></button></div>`;
+  /* this month's payment: paid by a logged payment, marked paid by hand (can be undone), or a button to mark it */
+  const due = !isDebit(c) && d ? nxt(d) : null, how = due && paidHow(c, due);
+  if (due) $('#dbody').insertAdjacentHTML('beforeend', how
+    ? `<div class="paidc"><span class="ok">${svg(IC.check, 18)}</span><div class="rm"><div class="val">${esc(short(due))} payment paid</div><div class="lab">${how.mark ? 'Marked as paid' : 'Payment logged ' + esc(short(pd(how.pay.date)))}</div></div>${how.mark ? '<button class="pillb" id="unpaid" type="button">Undo</button>' : ''}</div>`
+    : `<button class="btn s" id="markpaid" type="button">Mark ${esc(short(due))} payment as paid</button>`);
+  const setPaid = v => { c.paidFor = v; c.updatedAt = nowTs(); commit('cards'); openDetail(c.id); };
+  if ($('#markpaid')) $('#markpaid').onclick = () => setPaid(tstr(due));
+  if ($('#unpaid')) $('#unpaid').onclick = () => setPaid('');
   const el = cardEl(c, true); $('#big').replaceWith(el);
   if (c.num || c.exp || c.cvv) { const b = document.createElement('button'); b.className = 'eye'; b.setAttribute('aria-label', 'Show card details'); b.innerHTML = svg(IC.eye); b.onclick = () => askPin(() => reveal(c, el)); el.appendChild(b); }
   $('#bk').onclick = () => { hideNow(); $('#detail').classList.remove('on'); };
@@ -1660,7 +1692,7 @@ function openCardForm(c) {
         type: debit ? 'debit' : 'credit',
         stmtDay: debit ? '' : clamp($('#fs').value), dueDay: debit ? '' : clamp($('#fd').value), opened: $('#fo').value,
         last4: num ? num.slice(-4) : $('#f4').value.replace(/\D/g, '').slice(0, 4), num, exp, cvv, photo,
-        chartColor: e.chartColor || '',
+        chartColor: e.chartColor || '', paidFor: e.paidFor || '',
         pos: c ? (c.pos || 0) : (S.cards.reduce((m, x) => Math.max(m, x.pos || 0), -1) + 1), updatedAt: nowTs()
       };
       if (c) S.cards[S.cards.findIndex(x => x.id === c.id)] = o; else S.cards.push(o);
