@@ -1065,12 +1065,9 @@ function renderNextUp() {
     return;
   }
   const { lead, P, soon } = info, st = lead === 's', days = P.days, n = P.cards.length;
-  /* the ring: one section per card in its chart color; several cards meet with no gaps and keep rounded outer ends */
+  /* the ring: one arc in the app icon's green, whatever the card; the chips beside it say which cards */
   const C = 2 * Math.PI * 40, op = P.fill.faint ? ' opacity=".4"' : '';
-  const arc = (col, len, offs, cap, extra = '') =>
-    `<circle cx="46" cy="46" r="40" fill="none" stroke="${esc(col)}" stroke-width="9" stroke-linecap="${cap}" stroke-dasharray="${Math.max(len, 1).toFixed(1)} 999" stroke-dashoffset="${(-offs).toFixed(1)}"${op}${extra}/>`;
-  let arcs = n > 1 ? arc(cCol(P.cards[n - 1].id), C * P.fill.f, 0, 'round', ' data-cap="1"') : '';
-  P.cards.forEach((c, i) => { arcs += arc(cCol(c.id), C * P.fill.f / n, C * P.fill.f / n * i, n === 1 || i === 0 ? 'round' : 'butt'); });
+  const arcs = `<circle cx="46" cy="46" r="40" fill="none" stroke="#2ecc40" stroke-width="9" stroke-linecap="round" stroke-dasharray="${Math.max(C * P.fill.f, 1).toFixed(1)} 999"${op}/>`;
   const mid = days === 0 ? '<b class="t">Today</b>' : `<b>${days}</b><span>${days === 1 ? 'day' : 'days'}</span>`;
   const dot = c => `<i style="background:${esc(cCol(c.id))}"></i>`;
   const tag = k => k === 'b' ? '<em class="n-tag p">Payment</em> <em class="amp">&amp;</em> <em class="n-tag s">Statement</em>'
