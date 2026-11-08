@@ -367,6 +367,11 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .av:active:not(.big){transform:scale(.94)}
 /* ---------- settings ---------- */
 #settings{z-index:55}
+.shd{display:flex;flex-direction:column;align-items:center;gap:12px;margin:4px 0 8px}.shd .av.big{width:86px;height:86px}.shd .av.big::before{background:var(--bg)}.shd .av.big b{font-size:34px}
+#settings .snm{width:auto;max-width:100%;min-width:80px;height:auto;text-align:center;font-size:26px;font-weight:700;letter-spacing:-.02em;color:var(--tx);background:none;border:0;border-bottom:2px solid transparent;border-radius:0;box-shadow:none;padding:2px 6px;margin:0}
+#settings .snm:focus{outline:none;border-bottom-color:var(--g);background:none;box-shadow:none}#settings .snm::placeholder{color:var(--mut);font-weight:600}
+.sh3{font-size:19px;font-weight:700;color:var(--tx);margin:22px 2px 10px;letter-spacing:-.01em}
+#pinRm{margin-top:18px}
 .prof{display:flex;align-items:center;gap:16px;padding:16px 0}.pf{flex:1;min-width:0}
 .pf label,#settings label{font-size:13px;color:var(--mut);font-weight:500;margin:0 2px 6px}
 #settings input{background:var(--p0);border:1px solid var(--line);border-radius:16px;height:52px;padding:0 16px;margin-bottom:14px}
@@ -1101,8 +1106,9 @@ function renderNextUp() {
   /* the check sticks to the last word, so if a long name wraps it never sits on a line by itself */
   const paidName = c => { const w = lbl(c).split(' '), last = w.pop(); return (w.length ? esc(w.join(' ')) + ' ' : '') + `<span class="nw">${esc(last)}<b class="ok">${svg(IC.check, 10)}</b></span>`; };
   const side = `<div class="nr-ttl">${title}</div><div class="nr-list">${P.cards.map(c => !st && P.paid.includes(c) ? `<div class="pd">${dot(c)}<s>${paidName(c)}</s></div>` : `<div>${dot(c)}<s>${esc(lbl(c))}</s></div>`).join('')}</div>`;
-  /* the list: date (Today / Tomorrow when that close, once when cards share it), card color, full name, and a tag */
-  const day = d => { const u = daysUntil(d); return u === 0 ? 'Today' : u === 1 ? 'Tomorrow' : esc(short(d)); };
+  /* the list: when (Today / Tomorrow / the weekday within the week, the date a week out; once when cards share it),
+     card color, full name, and a tag */
+  const day = d => { const u = daysUntil(d); return u === 0 ? 'Today' : u === 1 ? 'Tomorrow' : u < 7 ? d.toLocaleDateString('en-US', { weekday: 'short' }) : esc(short(d)); };
   const soonTxt = soon.length ? `<div class="nr-soon${soon.some(l => daysUntil(l.d) <= 1) ? ' wd' : ''}">${soon.map((l, i) => `<div><b>${i && +soon[i - 1].d === +l.d ? '' : day(l.d)}</b>${dot(l.c)}<s>${esc(lbl(l.c))}</s><span>${tag(l)}</span></div>`).join('')}</div>` : '';
   const named = a => a.map(c => esc(lbl(c))).join(', ');
   const label = `${st ? 'Next statement closes' : 'Next payment due'} ${days === 0 ? 'today' : `in ${plural(days, 'day')}`}, ${esc(weekdayDate(P.date))}: ${named(P.cards)}. Open Cards`;
@@ -1786,7 +1792,8 @@ const pinOk = v => !hasPin() || hashPin(v) === S.security.pin;
 
 function renderPinPage(host, mode) {
   const had = hasPin(), rm = mode === 'remove';
-  host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Settings</button></div><h1 class="vt vt2">${rm ? 'Remove PIN' : had ? 'Change PIN' : 'Set PIN'}</h1><div class="pinw" id="pinw"></div>`;
+  host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Settings</button></div><h1 class="vt vt2">${rm ? 'Remove PIN' : had ? 'Change PIN' : 'Set PIN'}</h1><div class="pinw" id="pinw"></div>${had && !rm ? '<button class="btn s" id="pinRm" type="button">Remove PIN</button>' : ''}`;
+  if ($('#pinRm')) $('#pinRm').onclick = () => renderSettings('pinrm');
   const w = $('#pinw');
   const STEPS = { cur: ['Enter current PIN', 'To make sure it is you'], nw: ['Enter new PIN', 'Choose 4 digits'], cf: ['Confirm new PIN', 'Enter it once more'] };
   let step = had ? 'cur' : 'nw', v = '', first = '';
@@ -2291,10 +2298,14 @@ function paintAvatars() {
 }
 const agoTxt = t => { const m = Math.floor((Date.now() - t) / 60000); return m < 1 ? 'just now' : m < 60 ? m + (m === 1 ? ' minute ago' : ' minutes ago') : Math.floor(m / 60) + (m < 120 ? ' hour ago' : ' hours ago'); };
 function refreshSetSub() {
-  const el = $('#setSub'); if (!el) return;
-  el.textContent = !Sync.connected() ? 'Data is saved on this device only' : (Sync.cur.text === 'Synced' && Sync.lastOk ? 'Last synced ' + agoTxt(Sync.lastOk) : 'Connected to your GitHub gist');
+  const el = $('#setSub'); if (el) el.textContent = !Sync.connected() ? 'Data is saved on this device only' : (Sync.cur.text === 'Synced' && Sync.lastOk ? 'Last synced ' + agoTxt(Sync.lastOk) : 'Connected to your GitHub gist');
+  const ss = $('#setSync .lab'); if (ss) ss.textContent = syncSummary();
 }
+/* phones that set up reminders register themselves, so that is the count we know */
+const phonesTxt = () => { const n = (S.devices || []).length; return n ? n + (n === 1 ? ' phone' : ' phones') : ''; };
+const syncSummary = () => Sync.connected() ? ['Connected', phonesTxt()].filter(Boolean).join(' \u00b7 ') : 'Not connected';
 
+/* used on the Sync page for its status row */
 const setRow = (col, ic, name, sub, right) => `<div class="row"><div class="ic" style="color:${col}">${svg(ic, 19)}</div><div class="rm"><div class="val">${name}</div>${sub ? `<div class="lab"${right === 1 ? ' id="setSub"' : ''}>${sub}</div>` : ''}</div>${right === 1 ? '<div class="rr"><div class="v sync-v syncT"></div></div>' : svg(IC.right, 18)}</div>`;
 
 function renderSettings(page) {
@@ -2313,20 +2324,18 @@ function renderSettings(page) {
   } else if (page === 'restore') {
     renderRestorePage(host);
   } else {
-    host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Home</button></div><h1 class="vt vt2">Settings</h1>
-    <div class="lcard"><div class="prof"><span class="av big" id="setAv"><b></b></span><div class="pf"><label for="setName">First name</label><input id="setName" type="text" maxlength="30" autocomplete="given-name" placeholder="Your first name" value="${esc((S.profile && S.profile.name) || '')}"></div></div></div>
-    <div class="hint">Shown on your avatar. Syncs to your other devices.</div>
-    <div class="sec">Sync</div>
-    <div class="panel sp">${setRow('#00c805', SET_IC.sync, 'Status', ' ', 1)}<button class="row rowb" id="setSync" type="button"><div class="ic" style="color:#0094ff">${svg(SET_IC.key, 19)}</div><div class="rm"><div class="val">Sync settings</div><div class="lab">GitHub token and Gist ID</div></div>${svg(IC.right, 18)}</button></div>
-    <div class="sec">Reminders</div>
-    <div class="panel sp"><button class="row rowb" id="setRem" type="button"><div class="ic" style="color:#2ecc40">${svg(SET_IC.bell, 19)}</div><div class="rm"><div class="val">Reminders</div><div class="lab">${esc(remSummary())}</div></div>${svg(IC.right, 18)}</button></div>
-    <div class="sec">Home screen</div>
-    <div class="panel sp"><button class="row rowb" id="setHome" type="button"><div class="ic" style="color:#ffb700">${svg(SET_IC.home, 19)}</div><div class="rm"><div class="val">Customize Home</div><div class="lab">Order and size of cards</div></div>${svg(IC.right, 18)}</button></div>
-    <div class="sec">Security</div>
-    <div class="panel sp"><button class="row rowb" id="setPin" type="button"><div class="ic" style="color:#9d4edd">${svg(SET_IC.lock, 19)}</div><div class="rm"><div class="val">${hasPin() ? 'Change PIN' : 'Set PIN'}</div><div class="lab">${hasPin() ? 'Passcode for card details' : 'Ask for a passcode before showing card details'}</div></div>${svg(IC.right, 18)}</button>${hasPin() ? `<button class="row rowb" id="setPinRm" type="button"><div class="ic" style="color:#ff5000">${svg(SET_IC.lock, 19)}</div><div class="rm"><div class="val">Remove PIN</div><div class="lab">Show card details without a passcode</div></div>${svg(IC.right, 18)}</button>` : ''}</div>
-    <div class="sec">Data</div>
-    <div class="panel sp"><button class="row rowb" id="setData" type="button"><div class="ic" style="color:#0094ff">${svg(SET_IC.data, 19)}</div><div class="rm"><div class="val">Export and restore</div><div class="lab">Backups, CSV and JSON</div></div>${svg(IC.right, 18)}</button></div>`;
+    /* the avatar (its ring shows sync status) and the name, which is edited in place: tap it, type, Return or tap away */
+    const go = (id, col, ic, val, lab) => `<button class="row rowb" id="${id}" type="button"><div class="ic" style="color:${col}">${svg(ic, 19)}</div><div class="rm"><div class="val">${val}</div><div class="lab">${lab}</div></div>${svg(IC.right, 18)}</button>`;
+    host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Home</button></div>
+    <div class="shd"><span class="av big" id="setAv"><b></b></span>
+    <input id="setName" class="snm" type="text" maxlength="30" autocomplete="given-name" enterkeyhint="done" aria-label="First name" placeholder="Add your name" value="${esc((S.profile && S.profile.name) || '')}"></div>
+    <h3 class="sh3">App</h3>
+    <div class="panel sp">${go('setHome', '#ffb700', SET_IC.home, 'Customize Home', 'Order, size and hidden tiles')}${go('setRem', '#2ecc40', SET_IC.bell, 'Reminders', esc(remSummary()))}</div>
+    <h3 class="sh3">Security and data</h3>
+    <div class="panel sp">${go('setPin', '#9d4edd', SET_IC.lock, hasPin() ? 'Change PIN' : 'Set PIN', hasPin() ? 'For card numbers' : 'Ask for a passcode before showing card numbers')}${go('setSync', '#0094ff', SET_IC.key, 'Sync settings', esc(syncSummary()))}${go('setData', '#0094ff', SET_IC.data, 'Export and restore', 'Backup file and CSV')}</div>`;
     const inp = $('#setName'); let nt = 0;
+    const fit = () => { inp.size = Math.max(Array.from(inp.value).length, inp.value ? 1 : 12) + 1; };
+    fit(); inp.addEventListener('input', fit);
     inp.oninput = () => {
       S.profile = { name: inp.value.slice(0, 30), updatedAt: nowTs() };
       saveState(); paintAvatars();
@@ -2337,12 +2346,12 @@ function renderSettings(page) {
     $('#setHome').onclick = () => renderSettings('home');
     $('#setRem').onclick = () => renderSettings('rem');
     $('#setPin').onclick = () => renderSettings('pin');
-    if ($('#setPinRm')) $('#setPinRm').onclick = () => renderSettings('pinrm');
     $('#setData').onclick = () => renderSettings('data');
     $$('#setAv').forEach(a => { a.className = 'av big' + (Sync.cur.cls ? ' ' + Sync.cur.cls : ''); });
-    $$('.syncT').forEach(x => { x.textContent = Sync.cur.text; }); $$('.sync-v').forEach(x => { x.classList.remove('w', 'e'); if (Sync.cur.cls) x.classList.add(Sync.cur.cls); });
-    refreshSetSub();
   }
+  /* sync status (main page avatar and the Sync page's status row) */
+  $$('.syncT').forEach(x => { x.textContent = Sync.cur.text; }); $$('.sync-v').forEach(x => { x.classList.remove('w', 'e'); if (Sync.cur.cls) x.classList.add(Sync.cur.cls); });
+  refreshSetSub();
   paintAvatars();
   $('#setBack').onclick = () => { if (page === 'main') closeSettings(); else renderSettings(page === 'restore' ? 'data' : 'main'); };
   $('#settings').scrollTop = 0;
@@ -2350,7 +2359,10 @@ function renderSettings(page) {
 
 function renderSyncPage(host) {
   const connected = Sync.connected();
+  const devs = S.devices || [], phone = '<rect x="7" y="2.5" width="10" height="19" rx="2.5"/><path d="M11 18.5h2"/>';
+  const names = devs.map(d => esc(d.label || 'Phone') + (d.id === devId() ? ' (this phone)' : '')).join(' \u00b7 ');
   host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Settings</button></div><h1 class="vt vt2">Sync</h1>
+  <div class="panel sp">${setRow('#00c805', SET_IC.sync, 'Status', ' ', 1)}${connected && devs.length ? `<div class="row"><div class="ic" style="color:#0094ff">${svg(phone, 19)}</div><div class="rm"><div class="val">${phonesTxt()}</div><div class="lab">${names}</div></div></div>` : ''}</div>
   <p class="snote">One private GitHub gist holds everything: expenses, cards and payments. Connect once and every tab stays in sync across your devices. Create a token at
   <a href="https://github.com/settings/tokens/new?scopes=gist&description=CardWise" target="_blank" rel="noopener">github.com/settings/tokens</a> with the <b>gist</b> permission.</p>
   <label for="st">GitHub token</label>
