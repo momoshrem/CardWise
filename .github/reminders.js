@@ -5,7 +5,7 @@
    6 hours); if the time is further away, it waits that long and then starts a fresh run of itself to carry on. */
 const GIST = process.env.GIST_ID, TOKEN = process.env.GIST_TOKEN;
 const STATE_FILE = 'reminders-sent.json';
-const DAYS_OK = [0, 1, 2, 3, 5, 7];
+const DAYS_OK = [0, 1, 2, 3, 4, 5, 6, 7];   // the day of, or 1 to 7 days before (matches the app)
 const MAX_WAIT = +process.env.MAX_WAIT_MIN || 330;
 /* the clock: real time, or a test time that moves forward when a test "waits" */
 let skew = 0;

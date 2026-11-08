@@ -402,6 +402,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .opt.on{border-color:var(--g)}.opt.on i{border-color:var(--g);background:radial-gradient(circle,var(--g) 0 45%,transparent 50%)}
 .opt b{display:block;font-size:15px;font-weight:600}.opt small{display:block;margin-top:3px;font-size:13px;color:var(--sub);line-height:1.35}
 #settings .stat{margin:10px 2px 14px}
+.r2+.stat:empty{display:none}
 
 /* Next up: countdown ring in the card's chart color, details beside it */
 .nr{display:flex;align-items:center;gap:22px}
@@ -502,9 +503,12 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 .rrow{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 0}.rrow.rtop{border-bottom:1px solid var(--line)}
 .rrow b{font-size:15px;font-weight:600;color:var(--tx)}.rrow small{display:block;font-size:12.5px;color:var(--mut);margin-top:2px}
 .rsub{font-size:12.5px;color:var(--sub);font-weight:600;margin-top:12px}
-.dchips{display:flex;flex-wrap:wrap;gap:8px;padding:8px 0 14px}
-.dchips button{padding:8px 13px;border-radius:999px;background:var(--p2);border:1px solid var(--line);font:inherit;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer;min-height:36px}
-.dchips button.on{background:rgba(46,204,64,.16);border-color:rgba(46,204,64,.45);color:var(--hi)}
+.r2 .rrow{padding:13px 0}.r2 .rrow+.rrow{border-top:1px solid var(--line)}.r2 .rrow small b{color:var(--hi);font-weight:600;font-size:12.5px}
+.dchips{display:flex;gap:5px;padding:2px 0 14px}
+.dchips button{height:34px;min-width:0;flex:1;padding:0;border-radius:17px;background:var(--p2);border:1px solid var(--line);font:inherit;font-size:14px;font-weight:600;color:var(--sub);cursor:pointer}
+.dchips button.w{flex:none;width:60px;font-size:13px;white-space:nowrap}
+.dchips button.on{background:rgba(46,204,64,.16);border-color:rgba(46,204,64,.55);color:var(--hi)}
+.dcap{font-size:11.5px;color:var(--mut);margin:-8px 0 12px 65px;text-align:center}
 .tm{width:auto;margin:0;font-size:15px;font-weight:600;color:var(--tx);background:var(--p2);border:1px solid var(--line);border-radius:10px;padding:7px 12px;-webkit-appearance:none;appearance:none;text-align:center}
 .roff{opacity:.45;pointer-events:none}
 #remStat:empty{display:none}
@@ -707,8 +711,8 @@ function homeHidden(h) {
   return out.length >= HOME_KEYS.length ? out.slice(0, HOME_KEYS.length - 1) : out;
 }
 const homeFrom = h => ({ order: homeOrder(h && h.order), hidden: homeHidden(h && h.hidden), updatedAt: (h && +h.updatedAt) || 0 });
-/* Reminders: what to be reminded about, synced to every device; sent each morning by the GitHub job */
-const REM_DAYS = [0, 1, 2, 3, 5, 7];
+/* Reminders: what to be reminded about (the day of, or 1 to 7 days before), synced to every device; sent by the GitHub job */
+const REM_DAYS = [0, 1, 2, 3, 4, 5, 6, 7];
 const remDays = a => REM_DAYS.filter(d => (Array.isArray(a) ? a : []).map(Number).indexOf(d) >= 0);
 const remFrom = r => {
   r = r && typeof r === 'object' ? r : {};
@@ -2438,20 +2442,18 @@ async function remTurnOn() {
 function renderRemPage(host, msg) {
   const r = S.reminders, on = remOn();
   const sw = (id, v, label) => `<button class="sw${v ? ' on' : ''}" id="${id}" type="button" role="switch" aria-checked="${v}" aria-label="${label}"></button>`;
-  const chips = (k, sel) => `<div class="dchips" data-k="${k}">${REM_DAYS.map(d => `<button type="button" data-d="${d}" aria-pressed="${sel.indexOf(d) >= 0}"${sel.indexOf(d) >= 0 ? ' class="on"' : ''}>${d === 0 ? 'Day of' : d === 7 ? '1 week' : plural(d, 'day')}</button>`).join('')}</div>`;
+  /* one row: Day of, then 1 to 7 days before; several can be picked */
+  const chips = (k, sel) => `<div class="dchips" data-k="${k}" role="group" aria-label="Days before">${REM_DAYS.map(d => `<button type="button" data-d="${d}" aria-pressed="${sel.indexOf(d) >= 0}" aria-label="${d === 0 ? 'Day of' : plural(d, 'day') + ' before'}" class="${d === 0 ? 'w' : ''}${sel.indexOf(d) >= 0 ? ' on' : ''}">${d === 0 ? 'Day of' : d}</button>`).join('')}</div><div class="dcap">days before</div>`;
+  /* what is picked, in words: "3 days before and the day of" */
+  const said = sel => { const b = sel.filter(d => d > 0), w = b.length ? (b.length === 1 ? plural(b[0], 'day') : b.slice(0, -1).join(', ') + ' and ' + b[b.length - 1] + ' days') + ' before' : ''; return sel.indexOf(0) >= 0 ? (w ? `<b>${w}</b> and the day of` : '<b>The day of</b>') : `<b>${w}</b>`; };
   const hours = Array.from({ length: 24 }, (_, h) => `<option value="${h}"${h === r.hour ? ' selected' : ''}>${hourTxt(h)}</option>`).join('');
   host.innerHTML = `<div class="nav"><button class="lk" id="setBack">${svg(IC.back)}Settings</button></div><h1 class="vt vt2">Reminders</h1>
-  <div class="lcard rcard"><div class="rrow"><div><b>Reminders on this phone</b><small>${on ? 'On · notifications allowed' : 'Off'}</small></div>${sw('remMe', on, 'Reminders on this phone')}</div></div>
+  <div class="lcard rcard r2"><div class="rrow"><div><b>On this phone</b><small>${on ? 'Notifications allowed' : 'Off'}</small></div>${sw('remMe', on, 'Reminders on this phone')}</div>
+  <div class="rrow${on ? '' : ' roff'}"><b>Send at</b><select class="tm" id="remHour" aria-label="Send at">${hours}</select></div></div>
   <p class="stat${msg ? ' bad' : ''}" id="remStat" role="status">${esc(msg || '')}</p>
   <div class="${on ? '' : 'roff'}">
-  <div class="sec">Payments due</div>
-  <div class="lcard rcard"><div class="rrow rtop"><b>Remind me about payments</b>${sw('remPay', r.pay, 'Remind me about payments')}</div>
-  <div class="rsub">How many days before</div>${chips('payDays', r.payDays)}</div>
-  <div class="sec">Statements closing</div>
-  <div class="lcard rcard"><div class="rrow rtop"><b>Remind me about statements</b>${sw('remStmt', r.stmt, 'Remind me about statements')}</div>
-  <div class="rsub">How many days before</div>${chips('stmtDays', r.stmtDays)}</div>
-  <div class="sec">Time</div>
-  <div class="lcard rcard"><div class="rrow"><div><b>Send at</b><small>Can arrive up to an hour late</small></div><select class="tm" id="remHour" aria-label="Send at">${hours}</select></div></div>
+  <div class="lcard rcard r2"><div class="rrow"><div><b>Payments</b>${r.pay ? `<small>${said(r.payDays)}</small>` : '<small>Off</small>'}</div>${sw('remPay', r.pay, 'Remind me about payments')}</div>${r.pay ? chips('payDays', r.payDays) : ''}</div>
+  <div class="lcard rcard r2"><div class="rrow"><div><b>Statements</b>${r.stmt ? `<small>${said(r.stmtDays)}</small>` : '<small>Off</small>'}</div>${sw('remStmt', r.stmt, 'Remind me about statements')}</div>${r.stmt ? chips('stmtDays', r.stmtDays) : ''}</div>
   </div>`;
   const again = m => renderRemPage(host, m);
   $('#remMe').onclick = async () => {
