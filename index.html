@@ -372,7 +372,7 @@ select{width:100%;background:var(--bg);border:.5px solid var(--line);border-radi
 #settings .snm:focus{outline:none;border-bottom-color:var(--g);background:none;box-shadow:none}#settings .snm::placeholder{color:var(--mut);font-weight:600}
 .sh3{font-size:19px;font-weight:700;color:var(--tx);margin:22px 2px 10px;letter-spacing:-.01em}
 #pinRm{margin-top:18px}
-.sft{display:flex;flex-direction:column;align-items:center;gap:7px;margin:44px 0 12px;opacity:.75}.sft img{width:40px;height:40px;border-radius:10px}.sft span{font-size:13px;font-weight:600;color:var(--sub);letter-spacing:.02em}
+.sft{display:flex;justify-content:center;margin:44px 0 12px;opacity:.75}.sft span{font-size:13px;font-weight:600;color:var(--sub);letter-spacing:.02em}
 .prof{display:flex;align-items:center;gap:16px;padding:16px 0}.pf{flex:1;min-width:0}
 .pf label,#settings label{font-size:13px;color:var(--mut);font-weight:500;margin:0 2px 6px}
 #settings input{background:var(--p0);border:1px solid var(--line);border-radius:16px;height:52px;padding:0 16px;margin-bottom:14px}
@@ -2334,7 +2334,7 @@ function renderSettings(page) {
     <div class="panel sp">${go('setHome', '#ffb700', SET_IC.home, 'Customize Home', 'Order, size and hidden tiles')}${go('setRem', '#2ecc40', SET_IC.bell, 'Reminders', esc(remSummary()))}</div>
     <h3 class="sh3">Security and data</h3>
     <div class="panel sp">${go('setPin', '#9d4edd', SET_IC.lock, hasPin() ? 'Change PIN' : 'Set PIN', hasPin() ? 'For card numbers' : 'Ask for a passcode before showing card numbers')}${go('setSync', '#0094ff', SET_IC.key, 'Sync settings', esc(syncSummary()))}${go('setData', '#0094ff', SET_IC.data, 'Export and restore', 'Backup file and CSV')}</div>
-    <div class="sft"><img src="icons/icon-192.png" alt="" width="40" height="40"><span>CardWise by Momo</span></div>`;
+    <div class="sft"><span>CardWise by Momo</span></div>`;
     const inp = $('#setName'); let nt = 0;
     const fit = () => { inp.size = Math.max(Array.from(inp.value).length, inp.value ? 1 : 12) + 1; };
     fit(); inp.addEventListener('input', fit);
